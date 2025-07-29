@@ -1,121 +1,123 @@
 {
   "name": "Agentic RedTeam Radar Development",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
-  "workspaceFolder": "/workspace",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "radar-dev",
+  "workspaceFolder": "/app",
   
   // Features to install
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
-      "version": "1.28",
-      "helm": "3.12"
-    }
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {}
   },
   
-  // VS Code extensions to install
+  // Configure tool-specific properties
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-python.black-formatter",
         "ms-python.isort",
-        "ms-python.pylint",
         "ms-python.flake8",
         "ms-python.mypy-type-checker",
-        "ms-python.bandit",
-        "ms-azuretools.vscode-docker",
-        "eamodio.gitlens",
-        "github.vscode-pull-request-github",
-        "github.copilot",
+        "ms-vscode.test-adapter-converter",
+        "ms-vscode.extension-test-runner",
+        "tamasfe.even-better-toml",
         "redhat.vscode-yaml",
-        "esbenp.prettier-vscode",
-        "yzhang.markdown-all-in-one",
-        "ms-vscode.vscode-todo-highlight",
-        "gruntfuggly.todo-tree",
-        "snyk-security.snyk-vulnerability-scanner",
-        "sonarsource.sonarlint-vscode",
-        "ms-toolsai.jupyter",
-        "humao.rest-client",
-        "hashicorp.terraform",
-        "ms-kubernetes-tools.vscode-kubernetes-tools",
-        "github.vscode-github-actions"
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-vscode.vscode-json",
+        "DavidAnson.vscode-markdownlint",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.makefile-tools"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "python.sortImports.args": ["--profile", "black"],
         "python.terminal.activateEnvironment": false,
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": ["tests"],
+        "files.associations": {
+          "*.yml": "yaml",
+          "*.yaml": "yaml"
+        },
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          ".pytest_cache": true,
+          ".coverage": true,
+          "htmlcov": true,
+          ".tox": true,
+          "dist": true,
+          "*.egg-info": true
+        }
       }
     }
   },
   
-  // Forward ports for development
-  "forwardPorts": [
-    8000,  // Documentation server
-    8080,  // API server
-    5432,  // PostgreSQL (if used)
-    6379   // Redis (if used)
-  ],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [8001, 5678, 6379, 5432, 9090, 3000],
+  
+  // Configure port attributes
   "portsAttributes": {
-    "8000": {
-      "label": "Documentation",
-      "onAutoForward": "openPreview"
-    },
-    "8080": {
-      "label": "API Server",
+    "8001": {
+      "label": "Radar API",
       "onAutoForward": "notify"
-    }
-  },
-  
-  // Environment variables
-  "containerEnv": {
-    "PYTHONPATH": "/workspace/src",
-    "DEVELOPMENT": "true",
-    "LOG_LEVEL": "DEBUG"
-  },
-  
-  // Secrets to mount (configure in GitHub Codespaces)
-  "secrets": {
-    "OPENAI_API_KEY": {
-      "description": "OpenAI API key for testing",
-      "documentationUrl": "https://platform.openai.com/api-keys"
     },
-    "ANTHROPIC_API_KEY": {
-      "description": "Anthropic API key for testing",
-      "documentationUrl": "https://console.anthropic.com/"
+    "5678": {
+      "label": "Python Debugger",
+      "onAutoForward": "ignore"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "ignore"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "ignore"
+    },
+    "3000": {
+      "label": "Grafana",
+      "onAutoForward": "ignore"
     }
   },
   
-  // Run commands after container creation
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-  
-  // Run commands after container starts
-  "postStartCommand": "bash .devcontainer/post-start.sh",
-  
-  // Run commands when attaching to existing container
-  "postAttachCommand": "bash .devcontainer/post-attach.sh",
-  
-  // Mount the local .git folder for Git operations
-  "mounts": [
-    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached"
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": [
+    "sh", "-c", 
+    "pip install -e .[dev] && pre-commit install && echo 'Development environment ready!'"
   ],
   
-  // Use the default user for better file permissions
-  "remoteUser": "vscode",
+  // Use 'postStartCommand' to run commands after the container starts
+  "postStartCommand": "echo 'Container started. Ready for development!'",
   
-  // Keep container running
-  "shutdownAction": "stopContainer",
+  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
+  "remoteUser": "radar",
   
-  // Wait for this command to complete before connecting
-  "waitFor": "postCreateCommand",
+  // Set environment variables
+  "containerEnv": {
+    "RADAR_LOG_LEVEL": "DEBUG",
+    "RADAR_TEST_MODE": "true",
+    "PYTHONPATH": "/app/src"
+  },
   
-  // Override the default command to keep container running
-  "overrideCommand": false,
-  
-  // Specify the shell to use
-  "remoteEnv": {
-    "PATH": "/opt/venv/bin:${PATH}"
-  }
+  // Mount the parent directory to access docker-compose.yml
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+  ]
 }

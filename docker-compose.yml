@@ -1,0 +1,206 @@
+# Docker Compose configuration for Agentic RedTeam Radar development and testing
+# Includes services for monitoring, databases, and development tools
+
+version: '3.8'
+
+services:
+  # Main application
+  radar:
+    build:
+      context: .
+      target: production
+    container_name: agentic-redteam-radar
+    environment:
+      - RADAR_LOG_LEVEL=INFO
+      - RADAR_OUTPUT_DIR=/app/reports
+      - RADAR_REPORT_FORMAT=html
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - radar-network
+    restart: unless-stopped
+
+  # Development environment
+  radar-dev:
+    build:
+      context: .
+      target: development
+    container_name: agentic-redteam-radar-dev
+    environment:
+      - RADAR_LOG_LEVEL=DEBUG
+      - RADAR_TEST_MODE=true
+    volumes:
+      - .:/app
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    ports:
+      - "8001:8000"
+      - "5678:5678"  # debugpy port
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - radar-network
+    profiles:
+      - dev
+
+  # Redis for caching and task queues
+  redis:
+    image: redis:7-alpine
+    container_name: radar-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-radar123}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - radar-network
+    restart: unless-stopped
+
+  # PostgreSQL for persistent data
+  postgres:
+    image: postgres:15-alpine
+    container_name: radar-postgres
+    environment:
+      - POSTGRES_DB=radar
+      - POSTGRES_USER=radar
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radar123}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - radar-network
+    restart: unless-stopped
+
+  # Monitoring and observability
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: radar-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - radar-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: radar-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - radar-network
+    profiles:
+      - monitoring
+
+  # Elasticsearch for log aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: radar-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - radar-network
+    profiles:
+      - logging
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: radar-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - radar-network
+    profiles:
+      - logging
+
+  # Test runner
+  test-runner:
+    build:
+      context: .
+      target: development
+    container_name: radar-test-runner
+    environment:
+      - RADAR_TEST_MODE=true
+      - PYTEST_ADDOPTS=--tb=short
+    volumes:
+      - .:/app
+      - ./test-results:/app/test-results
+    command: pytest tests/ --cov=agentic_redteam --cov-report=html:/app/test-results/coverage
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - radar-network
+    profiles:
+      - test
+
+  # Security scanner
+  security-scanner:
+    build:
+      context: .
+      target: development
+    container_name: radar-security-scanner
+    volumes:
+      - .:/app
+      - ./security-reports:/app/security-reports
+    command: |
+      sh -c "
+        mkdir -p /app/security-reports &&
+        bandit -r /app/src -f json -o /app/security-reports/bandit.json &&
+        pip-audit --format=json --output=/app/security-reports/pip-audit.json &&
+        echo 'Security scan completed. Reports saved to ./security-reports/'
+      "
+    networks:
+      - radar-network
+    profiles:
+      - security
+
+networks:
+  radar-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  elasticsearch-data:

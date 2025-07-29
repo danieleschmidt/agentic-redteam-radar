@@ -1,0 +1,69 @@
+# Development dependencies for Agentic RedTeam Radar
+# These dependencies are used for development, testing, and CI/CD
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0
+pytest-mock>=3.11.0
+pytest-benchmark>=4.0.0
+
+# Code quality tools
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+bandit[toml]>=1.7.5
+
+# Pre-commit hooks
+pre-commit>=3.7.0
+
+# Security tools
+pip-audit>=2.6.0
+safety>=2.3.0
+semgrep>=1.45.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocstrings[python]>=0.23.0
+
+# Build tools
+build>=1.0.0
+twine>=4.0.0
+
+# Development utilities
+ipython>=8.12.0
+ipdb>=0.13.0
+memory-profiler>=0.61.0
+line-profiler>=4.1.0
+
+# Test data generation
+hypothesis>=6.100.0
+faker>=25.0.0
+
+# Performance testing
+py-spy>=0.3.14
+
+# Container tools (optional)
+docker>=6.0.0
+
+# Notebook support (optional)
+jupyter>=1.0.0
+nbstripout>=0.6.0
+
+# Additional linting
+pydocstyle>=6.3.0
+pylint>=2.17.0
+xenon>=0.9.0
+
+# Type stubs
+types-requests>=2.31.0
+types-setuptools>=68.0.0
+
+# Dependency management
+pip-tools>=7.3.0
+
+# File monitoring for development
+watchdog>=3.0.0

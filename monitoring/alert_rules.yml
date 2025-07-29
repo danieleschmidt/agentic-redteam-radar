@@ -1,0 +1,107 @@
+# Prometheus alert rules for Agentic RedTeam Radar
+groups:
+  - name: radar.rules
+    rules:
+      # Application availability alerts
+      - alert: RadarAppDown
+        expr: up{job="radar-app"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Radar application is down"
+          description: "Radar application has been down for more than 5 minutes."
+
+      - alert: RadarHighErrorRate
+        expr: rate(radar_http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in Radar application"
+          description: "Error rate is {{ $value }} errors per second."
+
+      # Performance alerts
+      - alert: RadarHighLatency
+        expr: histogram_quantile(0.95, rate(radar_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency in Radar application"
+          description: "95th percentile latency is {{ $value }} seconds."
+
+      - alert: RadarHighMemoryUsage
+        expr: (radar_memory_usage_bytes / radar_memory_limit_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage in Radar application"
+          description: "Memory usage is {{ $value }}%."
+
+      # Security scanning alerts
+      - alert: RadarSecurityScanFailure
+        expr: radar_security_scan_failures_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Security scan failure detected"
+          description: "{{ $value }} security scan failures detected."
+
+      - alert: RadarHighVulnerabilityCount
+        expr: radar_vulnerabilities_detected_total > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High vulnerability count detected"
+          description: "{{ $value }} vulnerabilities detected in scans."
+
+      # Database alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been down for more than 5 minutes."
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 5 minutes."
+
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
