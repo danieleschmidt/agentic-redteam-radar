@@ -1,0 +1,463 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup Development Environment",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "venv", ".venv"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pip",
+      "args": ["install", "-e", ".[dev,test,docs]"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Setup Development Environment",
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Pre-commit Hooks",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pre-commit",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Install Dependencies",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pytest",
+      "args": [
+        "tests/",
+        "--cov=agentic_redteam",
+        "--cov-report=html",
+        "--cov-report=term-missing",
+        "-v"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "python",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning|info):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Run Performance Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pytest",
+      "args": [
+        "tests/performance/",
+        "-m",
+        "performance",
+        "--benchmark-json=benchmark-results.json",
+        "-v"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Security Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pytest",
+      "args": [
+        "tests/",
+        "-m",
+        "security",
+        "-v"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Code Quality Checks",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pre-commit",
+      "args": ["run", "--all-files"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "python",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s*(\\w+):\\s*(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/black",
+      "args": [".", "--line-length=88"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Sort Imports",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/isort",
+      "args": [".", "--profile=black"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Linting",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/flake8",
+      "args": ["src/", "tests/"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "flake8",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):(\\d+):\\s*(\\w+)\\s*(.*)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "code": 4,
+              "message": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Run Type Checking",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/mypy",
+      "args": ["src/", "--strict", "--ignore-missing-imports"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "mypy",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": [
+            {
+              "regexp": "^(.*):(\\d+):\\s*(error|warning|note):\\s*(.*)$",
+              "file": 1,
+              "line": 2,
+              "severity": 3,
+              "message": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Run Security Scan",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/bandit",
+      "args": [
+        "-r",
+        "src/",
+        "-f",
+        "json",
+        "-o",
+        "bandit-report.json"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Documentation",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/mkdocs",
+      "args": ["build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Serve Documentation",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/mkdocs",
+      "args": ["serve", "--dev-addr=127.0.0.1:8000"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean Build Artifacts",
+      "type": "shell",
+      "command": "rm",
+      "args": [
+        "-rf",
+        "build/",
+        "dist/",
+        "*.egg-info/",
+        ".pytest_cache/",
+        ".coverage",
+        "htmlcov/",
+        ".mypy_cache/",
+        "__pycache__/"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Package",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Clean Build Artifacts",
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Local Package",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/pip",
+      "args": ["install", "-e", "."],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Full CI Pipeline",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Run Code Quality Checks",
+        "Run Type Checking",
+        "Run Tests",
+        "Run Security Scan",
+        "Build Package"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Profile Performance",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "-m",
+        "cProfile",
+        "-o",
+        "profile.stats",
+        "-m",
+        "agentic_redteam.cli",
+        "scan",
+        "--help"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Memory Profile",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/mprof",
+      "args": [
+        "run",
+        "--python",
+        "-m",
+        "agentic_redteam.cli",
+        "scan",
+        "--help"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
