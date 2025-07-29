@@ -205,3 +205,33 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Security testing specific
+*.key
+*.pem
+*.crt
+.secrets/
+secrets.yml
+secrets.yaml
+.api_keys
+api_keys.txt
+.openai_key
+.anthropic_key
+
+# AI/ML models and data
+*.model
+*.pkl
+*.joblib
+models/
+checkpoints/
+tensorboard_logs/
+wandb/
+
+# Security radar specific
+radar-report.*
+security-report.*
+attack-patterns/
+test-results/
+vulnerability-reports/
+.radar/
+.attack_cache/
