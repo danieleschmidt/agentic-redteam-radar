@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503, E501
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    .tox,
+    build,
+    dist,
+    *.egg-info
+per-file-ignores =
+    __init__.py:F401
+    tests/*:S101,S106
+max-complexity = 10
+docstring-convention = google
+import-order-style = google
