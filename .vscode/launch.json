@@ -1,0 +1,226 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Main Module",
+      "type": "python",
+      "request": "launch",
+      "module": "agentic_redteam.cli",
+      "args": ["--help"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Radar CLI: Scan Agent",
+      "type": "python",
+      "request": "launch",
+      "module": "agentic_redteam.cli",
+      "args": [
+        "scan",
+        "--agent-config",
+        "examples/sample-agent.json"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "OPENAI_API_KEY": "${input:openaiApiKey}",
+        "ANTHROPIC_API_KEY": "${input:anthropicApiKey}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Radar CLI: List Patterns",
+      "type": "python",
+      "request": "launch",
+      "module": "agentic_redteam.cli",
+      "args": ["patterns", "list"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Radar CLI: Generate Report",
+      "type": "python",
+      "request": "launch",
+      "module": "agentic_redteam.cli",
+      "args": [
+        "report",
+        "--input",
+        "scan-results.json",
+        "--format",
+        "html"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Test Current File",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${file}",
+        "-v",
+        "--tb=short"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Test Suite",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v",
+        "--cov=agentic_redteam",
+        "--cov-report=term-missing"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Performance Tests",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/performance/",
+        "-m",
+        "performance",
+        "-v"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PERF_ITERATIONS": "10",
+        "PERF_WARMUP": "2"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Debug Attack Pattern",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/debug_attack_pattern.py",
+      "args": ["--pattern", "prompt_injection"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "DEBUG": "true"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Attach to Process",
+      "type": "python",
+      "request": "attach",
+      "port": 5678,
+      "host": "localhost",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "."
+        }
+      ],
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Remote Attach",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        }
+      ],
+      "justMyCode": false
+    },
+    {
+      "name": "Docker: Debug in Container",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/agentic_redteam/cli.py",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "/app/src"
+      },
+      "preLaunchTask": "docker-build-debug",
+      "postDebugTask": "docker-cleanup",
+      "justMyCode": false
+    }
+  ],
+  "inputs": [
+    {
+      "id": "openaiApiKey",
+      "description": "Enter your OpenAI API key",
+      "default": "",
+      "type": "promptString"
+    },
+    {
+      "id": "anthropicApiKey", 
+      "description": "Enter your Anthropic API key",
+      "default": "",
+      "type": "promptString"
+    },
+    {
+      "id": "agentConfig",
+      "description": "Path to agent configuration file",
+      "default": "examples/sample-agent.json",
+      "type": "promptString"
+    },
+    {
+      "id": "testPattern",
+      "description": "Test pattern to debug",
+      "default": "prompt_injection",
+      "type": "pickString",
+      "options": [
+        "prompt_injection",
+        "info_disclosure",
+        "policy_bypass",
+        "tool_abuse",
+        "jailbreak"
+      ]
+    }
+  ]
+}

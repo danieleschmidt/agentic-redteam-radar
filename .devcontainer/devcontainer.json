@@ -1,0 +1,121 @@
+{
+  "name": "Agentic RedTeam Radar Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  
+  // Features to install
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "1.28",
+      "helm": "3.12"
+    }
+  },
+  
+  // VS Code extensions to install
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.pylint",
+        "ms-python.flake8",
+        "ms-python.mypy-type-checker",
+        "ms-python.bandit",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "github.copilot",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.vscode-todo-highlight",
+        "gruntfuggly.todo-tree",
+        "snyk-security.snyk-vulnerability-scanner",
+        "sonarsource.sonarlint-vscode",
+        "ms-toolsai.jupyter",
+        "humao.rest-client",
+        "hashicorp.terraform",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "github.vscode-github-actions"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  
+  // Forward ports for development
+  "forwardPorts": [
+    8000,  // Documentation server
+    8080,  // API server
+    5432,  // PostgreSQL (if used)
+    6379   // Redis (if used)
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "Documentation",
+      "onAutoForward": "openPreview"
+    },
+    "8080": {
+      "label": "API Server",
+      "onAutoForward": "notify"
+    }
+  },
+  
+  // Environment variables
+  "containerEnv": {
+    "PYTHONPATH": "/workspace/src",
+    "DEVELOPMENT": "true",
+    "LOG_LEVEL": "DEBUG"
+  },
+  
+  // Secrets to mount (configure in GitHub Codespaces)
+  "secrets": {
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for testing",
+      "documentationUrl": "https://platform.openai.com/api-keys"
+    },
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for testing",
+      "documentationUrl": "https://console.anthropic.com/"
+    }
+  },
+  
+  // Run commands after container creation
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  
+  // Run commands after container starts
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  
+  // Run commands when attaching to existing container
+  "postAttachCommand": "bash .devcontainer/post-attach.sh",
+  
+  // Mount the local .git folder for Git operations
+  "mounts": [
+    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached"
+  ],
+  
+  // Use the default user for better file permissions
+  "remoteUser": "vscode",
+  
+  // Keep container running
+  "shutdownAction": "stopContainer",
+  
+  // Wait for this command to complete before connecting
+  "waitFor": "postCreateCommand",
+  
+  // Override the default command to keep container running
+  "overrideCommand": false,
+  
+  // Specify the shell to use
+  "remoteEnv": {
+    "PATH": "/opt/venv/bin:${PATH}"
+  }
+}

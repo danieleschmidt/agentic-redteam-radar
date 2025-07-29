@@ -1,0 +1,47 @@
+# YAML Linting Configuration for Agentic RedTeam Radar
+extends: default
+
+rules:
+  # Line length rules
+  line-length:
+    max: 120
+    level: warning
+
+  # Indentation rules
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Comments rules
+  comments:
+    min-spaces-from-content: 1
+
+  # Document rules
+  document-start:
+    present: false
+
+  # Brackets and braces
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Truthy values
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+
+  # Empty values
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+
+ignore: |
+  .github/
+  .venv/
+  venv/
+  node_modules/
+  *.json
