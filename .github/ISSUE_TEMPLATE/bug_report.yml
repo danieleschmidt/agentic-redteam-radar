@@ -1,0 +1,100 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Agentic RedTeam Radar
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please provide as much detail as possible to help us resolve the issue.
+        
+        **Security Note**: If this is a security vulnerability, please report it privately via security@terragonlabs.com instead of filing a public issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Initialize scanner with...
+        2. Run scan on agent with...
+        3. Observe error...
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Your environment details
+      value: |
+        - OS: [e.g., Ubuntu 22.04, macOS 13.0, Windows 11]
+        - Python Version: [e.g., 3.10.8]
+        - Agentic RedTeam Radar Version: [e.g., 0.1.0]
+        - AI Model Provider: [e.g., OpenAI GPT-4, Anthropic Claude]
+        - Installation Method: [e.g., pip, source, Docker]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Relevant error messages or logs
+      placeholder: Paste any error messages or logs here
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Relevant configuration (sanitize any secrets)
+      placeholder: Share your radar configuration (remove any API keys or sensitive data)
+      render: yaml
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: I have provided all requested information
+          required: true
+        - label: I have sanitized any sensitive information from logs/config
+          required: true
+        - label: This is not a security vulnerability (those should be reported privately)
+          required: true

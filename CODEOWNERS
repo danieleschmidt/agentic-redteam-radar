@@ -1,0 +1,39 @@
+# CODEOWNERS - Automated Review Assignments
+# This file defines code ownership for automated review assignments
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global ownership - all files require review from core maintainers
+* @terragonlabs/core-maintainers
+
+# Security-specific files require security team review
+SECURITY.md @terragonlabs/security-team
+.secrets.baseline @terragonlabs/security-team
+docs/security/ @terragonlabs/security-team
+src/agentic_redteam/security/ @terragonlabs/security-team
+
+# Infrastructure and DevOps files
+Dockerfile @terragonlabs/devops-team
+docker-compose.yml @terragonlabs/devops-team
+.github/ @terragonlabs/devops-team
+docs/workflows/ @terragonlabs/devops-team
+monitoring/ @terragonlabs/devops-team
+
+# Documentation requires technical writing review
+README.md @terragonlabs/tech-writers
+docs/ @terragonlabs/tech-writers
+CONTRIBUTING.md @terragonlabs/tech-writers
+CODE_OF_CONDUCT.md @terragonlabs/tech-writers
+
+# Core source code requires architecture review
+src/ @terragonlabs/architects @terragonlabs/core-maintainers
+tests/ @terragonlabs/qa-team @terragonlabs/core-maintainers
+
+# Configuration files require careful review
+pyproject.toml @terragonlabs/core-maintainers
+requirements*.txt @terragonlabs/core-maintainers
+tox.ini @terragonlabs/core-maintainers
+.pre-commit-config.yaml @terragonlabs/core-maintainers
+
+# Performance-critical files
+tests/performance/ @terragonlabs/performance-team
+docs/performance/ @terragonlabs/performance-team

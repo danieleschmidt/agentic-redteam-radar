@@ -1,0 +1,89 @@
+# Dependabot Configuration for Automated Dependency Updates
+# Keeps dependencies secure and up-to-date with automated pull requests
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "terragonlabs/core-maintainers"
+    assignees:
+      - "terragonlabs/security-team"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group related updates together
+    groups:
+      security-updates:
+        patterns:
+          - "bandit*"
+          - "pip-audit*"
+          - "detect-secrets*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing-framework:
+        patterns:
+          - "pytest*"
+          - "hypothesis*"
+          - "faker*"
+        update-types:
+          - "minor"
+          - "patch"
+      ai-ml-deps:
+        patterns:
+          - "openai*"
+          - "anthropic*"
+          - "langchain*"
+          - "scikit-learn*"
+          - "pandas*"
+          - "numpy*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Security updates get immediate attention
+    target-branch: "main"
+    
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday" 
+      time: "09:00"
+    reviewers:
+      - "terragonlabs/devops-team"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+
+  # GitHub Actions (when workflows are added)
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    reviewers:
+      - "terragonlabs/devops-team"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
