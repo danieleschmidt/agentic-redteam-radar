@@ -1,0 +1,54 @@
+[run]
+source = src/agentic_redteam
+branch = True
+parallel = True
+concurrency = multiprocessing,thread
+omit = 
+    */tests/*
+    */test_*.py
+    */*_test.py
+    */conftest.py
+    */venv/*
+    */site-packages/*
+    */__pycache__/*
+    */migrations/*
+    */manage.py
+    */wsgi.py
+    */asgi.py
+    */settings/*
+    setup.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+sort = Cover
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+    # TYPE_CHECKING blocks
+    if TYPE_CHECKING:
+    # Platform-specific code
+    if sys.platform
+    # Debug-only code
+    if DEBUG:
+
+[html]
+directory = htmlcov
+title = Agentic RedTeam Radar Coverage Report
+show_contexts = True
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+show_contexts = True

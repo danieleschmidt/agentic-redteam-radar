@@ -1,0 +1,121 @@
+site_name: Agentic RedTeam Radar
+site_description: Open-source implementation of an agent-centric red-teaming scanner for AI security testing
+site_url: https://agentic-redteam.readthedocs.io
+repo_url: https://github.com/terragonlabs/agentic-redteam-radar
+repo_name: terragonlabs/agentic-redteam-radar
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.follow
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+    - Configuration: configuration.md
+  - Architecture:
+    - Overview: architecture/README.md
+    - Decisions: 
+      - ADR-0001: architecture/decisions/ADR-0001-project-architecture-framework.md
+      - ADR-0002: architecture/decisions/ADR-0002-attack-pattern-plugin-system.md
+      - ADR-0003: architecture/decisions/ADR-0003-security-scanning-integration.md
+      - ADR-0004: architecture/decisions/ADR-0004-monitoring-and-observability-stack.md
+      - ADR-0005: architecture/decisions/ADR-0005-testing-strategy-and-framework.md
+  - Development:
+    - Setup: DEVELOPMENT.md
+    - Contributing: ../CONTRIBUTING.md
+    - Testing: testing.md
+  - Security:
+    - Framework: security/security-scanning-framework.md
+    - SBOM: security/sbom-generation.md
+    - Reporting: ../SECURITY.md
+  - Operations:
+    - Monitoring: monitoring/observability-framework.md
+    - Performance: performance/benchmarking-and-profiling.md
+    - Quality: quality/technical-debt-tracking.md
+  - Workflows:
+    - CI/CD Setup: workflows/CI-CD-SETUP.md
+    - Templates: workflows/advanced-ci-templates.md
+    - Deployment: workflows/deployment-strategies.md
+  - Repository:
+    - Branch Protection: repository/BRANCH_PROTECTION.md
+    - Release Automation: repository/RELEASE_AUTOMATION.md
+    - Performance Monitoring: repository/PERFORMANCE_MONITORING.md
+  - API Reference: api/
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_object_full_path: false
+            show_category_heading: true
+            group_by_category: true
+            heading_level: 2
+  - autorefs
+  - git-revision-date-localized:
+      type: date
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/terragonlabs/agentic-redteam-radar
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/agentic-redteam-radar/
+  version:
+    provider: mike
