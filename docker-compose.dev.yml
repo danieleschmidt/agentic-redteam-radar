@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  development:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+      target: development
+    volumes:
+      - .:/workspace:cached
+      - vscode-server:/root/.vscode-server
+      - pip-cache:/root/.cache/pip
+      - pre-commit-cache:/root/.cache/pre-commit
+    environment:
+      - TZ=UTC
+      - PYTHONPATH=/workspace/src
+      - DEVELOPMENT=true
+      - RADAR_LOG_LEVEL=DEBUG
+      - RADAR_TEST_MODE=true
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # Python debugger
+    depends_on:
+      - redis
+      - prometheus
+      - grafana
+    networks:
+      - radar-dev
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - radar-dev
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - radar-dev
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - radar-dev
+
+  mkdocs:
+    image: squidfunk/mkdocs-material:latest
+    ports:
+      - "3000:8000"
+    volumes:
+      - .:/docs
+    command: serve --dev-addr 0.0.0.0:8000
+    networks:
+      - radar-dev
+
+volumes:
+  vscode-server:
+  pip-cache:
+  pre-commit-cache:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  radar-dev:
+    driver: bridge

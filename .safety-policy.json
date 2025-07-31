@@ -1,0 +1,50 @@
+{
+  "security-requirements": {
+    "ignore-vulnerabilities": [],
+    "ignore-packages": [],
+    "continue-on-vulnerability-error": false
+  },
+  "dependency-check": {
+    "auto-security-updates": true,
+    "vulnerability-age-limit": 180,
+    "severity-threshold": "medium"
+  },
+  "alert-configuration": {
+    "email-alerts": true,
+    "severity-levels": ["critical", "high"],
+    "notification-channels": ["github-issues", "security-team"]
+  },
+  "scanning-policies": {
+    "scan-frequency": "daily",
+    "scan-on-pr": true,
+    "scan-on-release": true,
+    "include-dev-dependencies": true
+  },
+  "compliance-frameworks": {
+    "gdpr": {
+      "enabled": true,
+      "data-classification": "public"
+    },
+    "soc2": {
+      "enabled": true,
+      "controls": ["cc6.1", "cc6.2", "cc6.3"]
+    },
+    "iso27001": {
+      "enabled": true,
+      "control-mapping": "docs/compliance/iso27001-mapping.md"
+    }
+  },
+  "ai-ml-security": {
+    "model-scanning": {
+      "enabled": true,
+      "scan-huggingface-models": true,
+      "scan-openai-usage": true,
+      "check-prompt-injection": true
+    },
+    "data-privacy": {
+      "pii-detection": true,
+      "data-retention-policies": true,
+      "anonymization-checks": true
+    }
+  }
+}
