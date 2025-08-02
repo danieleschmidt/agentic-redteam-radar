@@ -1,0 +1,131 @@
+# .dockerignore for Agentic RedTeam Radar
+# Optimize build context and reduce image size
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+junit.xml
+test-results/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+logs/
+reports/
+temp/
+*.log
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Documentation build
+docs/_build/
+site/
+
+# Security
+*.pem
+*.key
+secrets/
+
+# Monitoring data
+monitoring/data/
+prometheus-data/
+grafana-data/
+elasticsearch-data/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Cache directories
+.cache/
+.mypy_cache/
+.ruff_cache/
+
+# Development tools
+.pre-commit-config.yaml
+.devcontainer/
+scripts/dev/
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Documentation that's not needed in container
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+*.md
+
+# License (keep only LICENSE file)
+LICENSE.*
+!LICENSE
+
+# Deployment
+kubernetes/
+helm/
+terraform/
