@@ -2,7 +2,7 @@
 # Optimized for security, performance, and minimal attack surface
 
 # Build stage
-FROM python:3.10-slim as builder
+FROM python:3.13-slim as builder
 
 # Security: Create non-root user
 RUN groupadd -r radar && useradd -r -g radar radar
@@ -31,7 +31,7 @@ COPY README.md LICENSE ./
 RUN pip install --no-cache-dir -e .
 
 # Production stage
-FROM python:3.10-slim as production
+FROM python:3.13-slim as production
 
 # Security: Install security updates
 RUN apt-get update && apt-get upgrade -y \
