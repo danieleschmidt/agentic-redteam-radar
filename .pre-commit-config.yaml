@@ -1,133 +1,166 @@
-# Advanced Pre-commit Configuration for Agentic RedTeam Radar
-# Enhanced with performance linting, security scanning, and advanced code quality checks
+# Pre-commit configuration for Agentic RedTeam Radar
+# See https://pre-commit.com for more information
 
 repos:
-  # Enhanced pre-commit hooks
+  # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-        args: ['--unsafe']
-      - id: check-toml
       - id: check-json
+      - id: check-toml
+      - id: check-xml
       - id: check-merge-conflict
-      - id: check-added-large-files
-        args: ['--maxkb=500']
-      - id: debug-statements
-      - id: check-docstring-first
       - id: check-case-conflict
-      - id: detect-private-key
-      - id: mixed-line-ending
+      - id: check-symlinks
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: name-tests-test
+        args: ['--pytest-test-first']
       - id: requirements-txt-fixer
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: ['--fix=lf']
 
-  # Code formatting
+  # Python code formatting
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 24.1.1
     hooks:
       - id: black
-        language_version: python3.10
-        args: [--line-length=88, --target-version=py310]
+        language_version: python3
+        args: ['--line-length=88']
 
-  # Import sorting
+  # Python import sorting
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--profile", "black", "--filter-files"]
+        args: ['--profile', 'black', '--line-length=88']
 
-  # Enhanced linting with performance checks
+  # Python linting with flake8
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
-        additional_dependencies:
-          - flake8-docstrings
-          - flake8-bugbear
-          - flake8-comprehensions
-          - flake8-pytest-style
-          - flake8-simplify
-          - flake8-bandit
-          - flake8-performance
-          - flake8-cognitive-complexity
-        args: ['--max-line-length=88', '--extend-ignore=E203,W503', '--max-complexity=10']
+        args: ['--max-line-length=88', '--extend-ignore=E203,W503']
+        additional_dependencies: [
+          'flake8-docstrings',
+          'flake8-bugbear',
+          'flake8-comprehensions',
+          'flake8-simplify',
+          'flake8-bandit'
+        ]
 
-  # Type checking
+  # Fast Python linting with ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.15
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+
+  # Python type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.8.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-all]
-        args: [--strict, --ignore-missing-imports]
+        additional_dependencies: [
+          'types-requests',
+          'types-PyYAML',
+          'types-click',
+          'types-setuptools'
+        ]
+        args: ['--strict', '--ignore-missing-imports']
 
-  # Security scanning - enhanced
+  # Security scanning
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: ['-c', 'pyproject.toml', '-r', 'src/']
-        additional_dependencies: ['bandit[toml]']
+        args: ['-r', 'src/', '-f', 'json']
+        exclude: tests/
 
-  # Dependency security scanning
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.6.1
+  # Dependency vulnerability scanning
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
     hooks:
-      - id: pip-audit
-        args: ['--requirement', 'requirements.txt', '--format=json', '--output=pip-audit-report.json']
+      - id: python-safety-dependencies-check
+        files: requirements.*\.txt$
 
-  # Advanced security - secrets detection
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
+  # YAML formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
     hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-        exclude: ^(pip-audit-report\.json|.*\.lock)$
+      - id: prettier
+        types: [yaml]
+        exclude: ^(docker-compose|\.github/workflows)
 
-  # Code complexity analysis
-  - repo: https://github.com/xenon-analyzer/xenon
-    rev: v0.9.0
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
     hooks:
-      - id: xenon
-        args: [--max-average=A, --max-modules=B, --max-absolute=B]
+      - id: hadolint-docker
+        args: ['--ignore', 'DL3008', '--ignore', 'DL3009']
 
-  # Documentation linting
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+
+  # Commit message formatting
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+      - id: commitizen-branch
+        stages: [push]
+
+  # Documentation checks
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: [--convention=google, --add-ignore=D100,D104]
+        args: ['--convention=google']
+        exclude: tests/
 
-  # YAML validation
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+  # License header checks
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
     hooks:
-      - id: yamllint
-        args: [-c=.yamllint.yml]
-
-  # Advanced Python analysis (selective)
-  - repo: local
-    hooks:
-      - id: performance-audit
-        name: performance-audit
-        entry: python -m scripts.performance_audit
-        language: python
+      - id: insert-license
         files: \.py$
-        additional_dependencies: [memory-profiler, py-spy]
+        args:
+          - --license-filepath
+          - LICENSE_HEADER.txt
+          - --comment-style
+          - '#'
 
-  # Jupyter notebook support
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.0
-    hooks:
-      - id: nbqa-black
-        files: \.ipynb$
-      - id: nbqa-isort
-        files: \.ipynb$
+# Configuration for specific hooks
+default_language_version:
+  python: python3.10
 
-# Configuration for CI environments
-ci:
-  autofix_commit_msg: |
-    [pre-commit.ci] auto fixes from pre-commit hooks
-  autofix_prs: true
-  autoupdate_schedule: weekly
-  skip: [xenon, performance-audit]  # Skip heavy checks in CI
+# Only run hooks on staged files
+default_stages: [commit]
+
+# Exclude certain files and directories
+exclude: |
+  (?x)^(
+    \.git/|
+    \.tox/|
+    \.venv/|
+    build/|
+    dist/|
+    .*\.egg-info/|
+    __pycache__/|
+    \.pytest_cache/|
+    \.mypy_cache/|
+    htmlcov/|
+    \.coverage|
+    node_modules/|
+    migrations/
+  )
+EOF < /dev/null

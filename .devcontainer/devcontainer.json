@@ -1,17 +1,16 @@
 {
-  "name": "Agentic RedTeam Radar Development",
-  "dockerComposeFile": "../docker-compose.yml",
-  "service": "radar-dev",
-  "workspaceFolder": "/app",
+  "name": "Agentic RedTeam Radar",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
   
-  // Features to install
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:1": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
   },
-  
-  // Configure tool-specific properties
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -20,34 +19,28 @@
         "ms-python.isort",
         "ms-python.flake8",
         "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-python.pylint",
         "ms-vscode.test-adapter-converter",
-        "ms-vscode.extension-test-runner",
-        "tamasfe.even-better-toml",
+        "hbenl.vscode-test-explorer",
         "redhat.vscode-yaml",
-        "ms-azuretools.vscode-docker",
-        "GitHub.copilot",
-        "GitHub.copilot-chat",
         "ms-vscode.vscode-json",
-        "DavidAnson.vscode-markdownlint",
-        "streetsidesoftware.code-spell-checker",
-        "ms-vscode.makefile-tools"
+        "github.vscode-pull-request-github",
+        "github.copilot",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "python.testing.unittestEnabled": false,
         "python.linting.enabled": true,
-        "python.linting.pylintEnabled": false,
         "python.linting.flake8Enabled": true,
         "python.linting.mypyEnabled": true,
         "python.formatting.provider": "black",
-        "python.sortImports.args": ["--profile", "black"],
-        "python.terminal.activateEnvironment": false,
-        "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false,
-        "python.testing.pytestArgs": ["tests"],
-        "files.associations": {
-          "*.yml": "yaml",
-          "*.yaml": "yaml"
-        },
+        "python.sortImports.provider": "isort",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.organizeImports": true
@@ -58,66 +51,42 @@
           ".pytest_cache": true,
           ".coverage": true,
           "htmlcov": true,
+          ".mypy_cache": true,
           ".tox": true,
+          "*.egg-info": true,
           "dist": true,
-          "*.egg-info": true
+          "build": true
+        },
+        "yaml.schemas": {
+          "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml",
+          "https://json.schemastore.org/docker-compose.json": "docker-compose*.yml"
         }
       }
     }
   },
-  
-  // Use 'forwardPorts' to make a list of ports inside the container available locally
-  "forwardPorts": [8001, 5678, 6379, 5432, 9090, 3000],
-  
-  // Configure port attributes
+
+  "forwardPorts": [8000, 8080, 5000],
   "portsAttributes": {
-    "8001": {
+    "8000": {
       "label": "Radar API",
       "onAutoForward": "notify"
     },
-    "5678": {
-      "label": "Python Debugger",
-      "onAutoForward": "ignore"
+    "8080": {
+      "label": "Monitoring Dashboard",
+      "onAutoForward": "silent"
     },
-    "6379": {
-      "label": "Redis",
-      "onAutoForward": "ignore"
-    },
-    "5432": {
-      "label": "PostgreSQL",
-      "onAutoForward": "ignore"
-    },
-    "9090": {
-      "label": "Prometheus",
-      "onAutoForward": "ignore"
-    },
-    "3000": {
-      "label": "Grafana",
-      "onAutoForward": "ignore"
+    "5000": {
+      "label": "Dev Server",
+      "onAutoForward": "silent"
     }
   },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
   
-  // Use 'postCreateCommand' to run commands after the container is created
-  "postCreateCommand": [
-    "sh", "-c", 
-    "pip install -e .[dev] && pre-commit install && echo 'Development environment ready!'"
-  ],
-  
-  // Use 'postStartCommand' to run commands after the container starts
-  "postStartCommand": "echo 'Container started. Ready for development!'",
-  
-  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
-  "remoteUser": "radar",
-  
-  // Set environment variables
-  "containerEnv": {
-    "RADAR_LOG_LEVEL": "DEBUG",
-    "RADAR_TEST_MODE": "true",
-    "PYTHONPATH": "/app/src"
-  },
-  
-  // Mount the parent directory to access docker-compose.yml
   "mounts": [
-    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
   ]
 }
+EOF < /dev/null
