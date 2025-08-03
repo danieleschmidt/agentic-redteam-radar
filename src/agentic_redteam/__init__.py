@@ -10,6 +10,17 @@ __author__ = "Daniel Schmidt"
 __email__ = "daniel@terragonlabs.com"
 
 from .scanner import RadarScanner
-from .agent import Agent
+from .agent import Agent, create_agent, AgentType
+from .config import RadarConfig
+from .results import ScanResult, Vulnerability
 
-__all__ = ["RadarScanner", "Agent", "__version__"]
+__all__ = [
+    "RadarScanner", 
+    "Agent", 
+    "create_agent",
+    "AgentType",
+    "RadarConfig",
+    "ScanResult",
+    "Vulnerability",
+    "__version__"
+]
