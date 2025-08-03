@@ -2,124 +2,70 @@
   "python.defaultInterpreterPath": "./venv/bin/python",
   "python.terminal.activateEnvironment": true,
   
-  // Testing configuration
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": [
-    "tests",
-    "--cov=agentic_redteam",
-    "--cov-report=html",
-    "--cov-report=term-missing"
-  ],
-  "python.testing.unittestEnabled": false,
-  
-  // Linting configuration
   "python.linting.enabled": true,
   "python.linting.flake8Enabled": true,
   "python.linting.mypyEnabled": true,
   "python.linting.banditEnabled": true,
-  "python.linting.pylintEnabled": false,
   
-  // Formatting configuration
   "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length", "88"],
-  
-  // Import sorting
   "python.sortImports.provider": "isort",
   "python.sortImports.args": ["--profile", "black"],
   
-  // Editor configuration
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "tests",
+    "--cov=src/agentic_redteam",
+    "--cov-report=html",
+    "--cov-report=term-missing"
+  ],
+  
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true,
     "source.fixAll.flake8": true
   },
-  "editor.rulers": [88],
   
-  // File exclusions
   "files.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true,
     ".pytest_cache": true,
+    ".mypy_cache": true,
     ".coverage": true,
     "htmlcov": true,
-    ".mypy_cache": true,
-    ".tox": true,
     "*.egg-info": true,
     "dist": true,
-    "build": true,
-    ".ruff_cache": true
+    "build": true
   },
   
-  // Search exclusions
+  "files.watcherExclude": {
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/htmlcov/**": true,
+    "**/node_modules/**": true
+  },
+  
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml",
+    "https://json.schemastore.org/docker-compose.json": "docker-compose*.yml"
+  },
+  
+  "security.workspace.trust.enabled": false,
+  
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
     "**/*.code-search": true,
     "**/__pycache__": true,
     "**/.pytest_cache": true,
-    "**/htmlcov": true,
-    "**/.mypy_cache": true,
-    "**/.tox": true,
-    "**/dist": true,
-    "**/build": true
-  },
-  
-  // Language-specific settings
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true
-  },
-  
-  "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml",
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
-  },
-  
-  "[json]": {
-    "editor.defaultFormatter": "ms-vscode.vscode-json",
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
-  },
-  
-  "[markdown]": {
-    "editor.wordWrap": "on",
-    "editor.quickSuggestions": false
-  },
-  
-  // YAML schemas
-  "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow.json": [
-      ".github/workflows/*.yml",
-      ".github/workflows/*.yaml"
-    ],
-    "https://json.schemastore.org/docker-compose.json": [
-      "docker-compose*.yml",
-      "docker-compose*.yaml"
-    ],
-    "https://json.schemastore.org/pre-commit-config.json": [
-      ".pre-commit-config.yaml"
-    ]
-  },
-  
-  // Git configuration
-  "git.autofetch": true,
-  "git.confirmSync": false,
-  "git.enableSmartCommit": true,
-  
-  // Docker configuration
-  "docker.showStartPage": false,
-  
-  // Terminal configuration
-  "terminal.integrated.defaultProfile.linux": "bash",
-  
-  // File associations
-  "files.associations": {
-    "Dockerfile*": "dockerfile",
-    "*.env*": "properties",
-    ".flake8": "ini",
-    ".coveragerc": "ini"
+    "**/htmlcov": true
   }
 }
 EOF < /dev/null
