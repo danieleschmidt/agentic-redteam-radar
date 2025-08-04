@@ -437,9 +437,9 @@ Found a vulnerability in an AI agent? Please follow responsible disclosure:
 ```bibtex
 @software{agentic_redteam_radar,
   title={Agentic RedTeam Radar: Automated Security Testing for AI Agents},
-  author={Your Name},
+  author={Daniel Schmidt},
   year={2025},
-  url={https://github.com/yourusername/agentic-redteam-radar}
+  url={https://github.com/danieleschmidt/agentic-redteam-radar}
 }
 ```
 
