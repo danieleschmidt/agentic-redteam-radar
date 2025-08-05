@@ -139,11 +139,11 @@ def redact_sensitive_data(text: str) -> str:
     
     # Redact API keys and tokens
     for pattern in SensitiveDataPattern.API_KEY_PATTERNS:
-        redacted_text = re.sub(pattern, r'\1[API_KEY_REDACTED]', redacted_text, flags=re.IGNORECASE)
+        redacted_text = re.sub(pattern, '[API_KEY_REDACTED]', redacted_text, flags=re.IGNORECASE)
     
     # Redact passwords and secrets
     for pattern in SensitiveDataPattern.PASSWORD_PATTERNS:
-        redacted_text = re.sub(pattern, r'\1[PASSWORD_REDACTED]', redacted_text, flags=re.IGNORECASE)
+        redacted_text = re.sub(pattern, '[PASSWORD_REDACTED]', redacted_text, flags=re.IGNORECASE)
     
     # Redact PII
     for pattern in SensitiveDataPattern.PII_PATTERNS:
@@ -151,7 +151,7 @@ def redact_sensitive_data(text: str) -> str:
     
     # Redact database connection strings
     for pattern in SensitiveDataPattern.DB_CONNECTION_PATTERNS:
-        redacted_text = re.sub(pattern, r'\1[DB_CONNECTION_REDACTED]', redacted_text, flags=re.IGNORECASE)
+        redacted_text = re.sub(pattern, '[DB_CONNECTION_REDACTED]', redacted_text, flags=re.IGNORECASE)
     
     return redacted_text
 

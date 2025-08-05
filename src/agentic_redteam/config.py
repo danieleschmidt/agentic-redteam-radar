@@ -6,9 +6,13 @@ and runtime parameters.
 """
 
 import os
-import yaml
 import logging
 from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Union
 
@@ -140,6 +144,9 @@ class RadarConfig:
         
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        
+        if yaml is None:
+            raise ImportError("PyYAML not installed. Install with: pip install pyyaml")
         
         with open(config_path, 'r') as f:
             config_data = yaml.safe_load(f)
@@ -299,6 +306,8 @@ class RadarConfig:
         Returns:
             YAML configuration string
         """
+        if yaml is None:
+            raise ImportError("PyYAML not installed. Install with: pip install pyyaml")
         return yaml.dump(self.to_dict(), default_flow_style=False, indent=2)
     
     def save_to_file(self, config_path: Union[str, Path]) -> None:

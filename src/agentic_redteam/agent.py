@@ -11,8 +11,15 @@ from typing import Dict, Any, List, Optional, Union
 from dataclasses import dataclass
 from enum import Enum
 
-import openai
-import anthropic
+try:
+    import openai
+except ImportError:
+    openai = None
+
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 
 
 class AgentType(Enum):
@@ -151,6 +158,9 @@ class OpenAIAgent(Agent):
     
     def _initialize_client(self) -> None:
         """Initialize OpenAI client."""
+        if openai is None:
+            raise ImportError("OpenAI library not installed. Install with: pip install openai")
+        
         client_kwargs = {}
         if self.config.api_key:
             client_kwargs["api_key"] = self.config.api_key
@@ -211,6 +221,9 @@ class AnthropicAgent(Agent):
     
     def _initialize_client(self) -> None:
         """Initialize Anthropic client."""
+        if anthropic is None:
+            raise ImportError("Anthropic library not installed. Install with: pip install anthropic")
+        
         client_kwargs = {}
         if self.config.api_key:
             client_kwargs["api_key"] = self.config.api_key
