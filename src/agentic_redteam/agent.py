@@ -13,13 +13,17 @@ from enum import Enum
 
 try:
     import openai
+    HAS_OPENAI = True
 except ImportError:
     openai = None
+    HAS_OPENAI = False
 
 try:
     import anthropic
+    HAS_ANTHROPIC = True
 except ImportError:
     anthropic = None
+    HAS_ANTHROPIC = False
 
 
 class AgentType(Enum):
@@ -158,9 +162,9 @@ class OpenAIAgent(Agent):
     
     def _initialize_client(self) -> None:
         """Initialize OpenAI client."""
-        if openai is None:
+        if not HAS_OPENAI:
             raise ImportError("OpenAI library not installed. Install with: pip install openai")
-        
+            
         client_kwargs = {}
         if self.config.api_key:
             client_kwargs["api_key"] = self.config.api_key
@@ -221,9 +225,9 @@ class AnthropicAgent(Agent):
     
     def _initialize_client(self) -> None:
         """Initialize Anthropic client."""
-        if anthropic is None:
+        if not HAS_ANTHROPIC:
             raise ImportError("Anthropic library not installed. Install with: pip install anthropic")
-        
+            
         client_kwargs = {}
         if self.config.api_key:
             client_kwargs["api_key"] = self.config.api_key
@@ -365,8 +369,12 @@ def create_agent(
     )
     
     if agent_type == AgentType.OPENAI_GPT:
+        if not HAS_OPENAI:
+            raise ImportError("OpenAI library not installed. Install with: pip install openai")
         return OpenAIAgent(config)
     elif agent_type == AgentType.ANTHROPIC_CLAUDE:
+        if not HAS_ANTHROPIC:
+            raise ImportError("Anthropic library not installed. Install with: pip install anthropic")
         return AnthropicAgent(config)
     elif agent_type == AgentType.CUSTOM:
         query_func = kwargs.get('query_func')
