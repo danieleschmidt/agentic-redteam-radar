@@ -74,9 +74,15 @@ class RadarScanner:
         ]
         
         for pattern in default_patterns:
-            if pattern.name.lower() in self.config.enabled_patterns:
+            # Extract the pattern type from class name (e.g., "PromptInjectionAttack" -> "prompt_injection")
+            import re
+            class_name = pattern.__class__.__name__
+            clean_name = class_name.replace("Attack", "").replace("Pattern", "")
+            pattern_type = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', clean_name).lower()
+            
+            if pattern_type in self.config.enabled_patterns or pattern.name.lower() in self.config.enabled_patterns:
                 self.attack_patterns.append(pattern)
-                self.logger.debug(f"Loaded attack pattern: {pattern.name}")
+                self.logger.debug(f"Loaded attack pattern: {pattern.name} (type: {pattern_type})")
     
     def register_pattern(self, pattern: AttackPattern) -> None:
         """

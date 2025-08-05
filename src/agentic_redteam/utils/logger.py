@@ -8,8 +8,15 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional
-from rich.logging import RichHandler
-from rich.console import Console
+
+try:
+    from rich.logging import RichHandler
+    from rich.console import Console
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+    RichHandler = None
+    Console = None
 
 
 class SecurityAwareFormatter(logging.Formatter):
@@ -69,7 +76,7 @@ def setup_logger(
     )
     
     # Console handler
-    if enable_rich:
+    if enable_rich and RICH_AVAILABLE:
         console = Console(stderr=True)
         console_handler = RichHandler(
             console=console,
