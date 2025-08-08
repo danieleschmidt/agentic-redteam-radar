@@ -19,7 +19,10 @@ from .attacks.info_disclosure import InfoDisclosureAttack
 from .attacks.policy_bypass import PolicyBypassAttack
 from .attacks.chain_of_thought import ChainOfThoughtAttack
 from .results import ScanResult, Vulnerability, AttackResult
-from .config import RadarConfig
+try:
+    from .config_simple import RadarConfig
+except ImportError:
+    from .config import RadarConfig
 from .utils.logger import setup_logger
 
 
@@ -60,7 +63,11 @@ class RadarScanner:
             config: Configuration object for scanner behavior
         """
         self.config = config or RadarConfig()
-        self.logger = setup_logger(__name__, self.config.log_level)
+        # Handle the case where config may not have initialized properly
+        log_level = getattr(self.config, 'log_level', 'INFO')
+        if hasattr(self.config, 'logging') and self.config.logging:
+            log_level = self.config.logging.level
+        self.logger = setup_logger(__name__, log_level)
         self.attack_patterns: List[AttackPattern] = []
         self._load_default_patterns()
     
@@ -80,7 +87,12 @@ class RadarScanner:
             clean_name = class_name.replace("Attack", "").replace("Pattern", "")
             pattern_type = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', clean_name).lower()
             
-            if pattern_type in self.config.enabled_patterns or pattern.name.lower() in self.config.enabled_patterns:
+            enabled_patterns = getattr(self.config, 'enabled_patterns', set())
+            if not enabled_patterns:
+                # If no enabled patterns specified, enable all by default
+                self.attack_patterns.append(pattern)
+                self.logger.debug(f"Loaded attack pattern: {pattern.name} (type: {pattern_type}) - default enabled")
+            elif pattern_type in enabled_patterns or pattern.name.lower() in enabled_patterns:
                 self.attack_patterns.append(pattern)
                 self.logger.debug(f"Loaded attack pattern: {pattern.name} (type: {pattern_type})")
     
@@ -124,7 +136,8 @@ class RadarScanner:
         attack_results: List[AttackResult] = []
         
         # Execute attack patterns with configured concurrency
-        semaphore = asyncio.Semaphore(self.config.max_concurrency)
+        max_concurrency = getattr(self.config, 'max_concurrency', 5)
+        semaphore = asyncio.Semaphore(max_concurrency)
         
         async def run_pattern(pattern: AttackPattern) -> List[AttackResult]:
             """Run a single attack pattern with concurrency control."""
@@ -183,7 +196,7 @@ class RadarScanner:
             scan_duration=progress.elapsed_time,
             patterns_executed=len(self.attack_patterns),
             total_tests=sum(len(r.test_cases) for r in attack_results if hasattr(r, 'test_cases')),
-            scanner_version=self.config.scanner_version
+            scanner_version=getattr(self.config, 'scanner_version', '0.1.0')
         )
         
         self.logger.info(
@@ -220,7 +233,8 @@ class RadarScanner:
         self.logger.info(f"Starting multi-agent scan of {len(agents)} agents")
         
         # Execute scans with global concurrency limit
-        semaphore = asyncio.Semaphore(self.config.max_agent_concurrency)
+        max_agent_concurrency = getattr(self.config, 'max_agent_concurrency', 3)
+        semaphore = asyncio.Semaphore(max_agent_concurrency)
         
         async def scan_agent(agent: Agent) -> tuple[str, ScanResult]:
             async with semaphore:
