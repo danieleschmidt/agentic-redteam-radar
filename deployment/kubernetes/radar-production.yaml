@@ -1,0 +1,315 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentic-redteam
+  labels:
+    app.kubernetes.io/name: agentic-redteam-radar
+    app.kubernetes.io/version: "1.0.0"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-config
+  namespace: agentic-redteam
+  labels:
+    app: agentic-redteam-radar
+data:
+  RADAR_LOG_LEVEL: "INFO"
+  RADAR_MAX_CONCURRENCY: "10"
+  RADAR_MAX_AGENT_CONCURRENCY: "5"
+  RADAR_TIMEOUT: "30"
+  RADAR_REPORT_FORMAT: "json"
+  RADAR_DATABASE_URL: "postgresql://radar:radar@postgres:5432/radar_db"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: radar-secrets
+  namespace: agentic-redteam
+  labels:
+    app: agentic-redteam-radar
+type: Opaque
+data:
+  # Base64 encoded secrets (replace with actual values)
+  openai-api-key: ""  # echo -n "your-key" | base64
+  anthropic-api-key: ""  # echo -n "your-key" | base64
+  database-password: "cmFkYXI="  # "radar" in base64
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radar-reports-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-redteam-radar
+  namespace: agentic-redteam
+  labels:
+    app: agentic-redteam-radar
+    version: "1.0.0"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: agentic-redteam-radar
+  template:
+    metadata:
+      labels:
+        app: agentic-redteam-radar
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: radar-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: radar
+        image: agentic-redteam/radar:1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: PYTHONPATH
+          value: "/app/src"
+        - name: RADAR_OUTPUT_DIR
+          value: "/app/reports"
+        envFrom:
+        - configMapRef:
+            name: radar-config
+        - secretRef:
+            name: radar-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        volumeMounts:
+        - name: reports-volume
+          mountPath: /app/reports
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: tmp-volume
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: reports-volume
+        persistentVolumeClaim:
+          claimName: radar-reports-pvc
+      - name: logs-volume
+        emptyDir: {}
+      - name: tmp-volume
+        emptyDir: {}
+      nodeSelector:
+        node-type: compute
+      tolerations:
+      - key: "compute-intensive"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - agentic-redteam-radar
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radar-service
+  namespace: agentic-redteam
+  labels:
+    app: agentic-redteam-radar
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  selector:
+    app: agentic-redteam-radar
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: radar-service-account
+  namespace: agentic-redteam
+  labels:
+    app: agentic-redteam-radar
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: agentic-redteam
+  name: radar-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: radar-rolebinding
+  namespace: agentic-redteam
+subjects:
+- kind: ServiceAccount
+  name: radar-service-account
+  namespace: agentic-redteam
+roleRef:
+  kind: Role
+  name: radar-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: radar-network-policy
+  namespace: agentic-redteam
+spec:
+  podSelector:
+    matchLabels:
+      app: agentic-redteam-radar
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-system
+    - podSelector:
+        matchLabels:
+          app: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+    - protocol: UDP
+      port: 53
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: radar-hpa
+  namespace: agentic-redteam
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agentic-redteam-radar
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: radar-pdb
+  namespace: agentic-redteam
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: agentic-redteam-radar

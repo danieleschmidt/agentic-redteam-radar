@@ -190,6 +190,17 @@ class ScanResult:
             "vulnerabilities_by_category": stats.vulnerabilities_by_category
         }
     
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get statistical summary of scan results."""
+        stats = self.statistics
+        return {
+            "severity_distribution": stats.vulnerabilities_by_severity,
+            "category_distribution": stats.vulnerabilities_by_category,
+            "success_rate": stats.success_rate,
+            "risk_score": stats.get_risk_score(),
+            "total_vulnerabilities": stats.get_total_vulnerabilities()
+        }
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert scan result to dictionary."""
         return {
