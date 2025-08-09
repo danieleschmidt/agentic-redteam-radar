@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # Redis Cache for High Performance
+  redis:
+    image: redis:7-alpine
+    container_name: radar-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server 
+      --maxmemory 1gb 
+      --maxmemory-policy allkeys-lru 
+      --save 900 1 
+      --save 300 10
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL Database for Results Storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: radar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: radar_production
+      POSTGRES_USER: radar_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_change_me}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deployment/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar_user -d radar_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Agentic RedTeam Radar API Service
+  radar-api:
+    build: 
+      context: .
+      dockerfile: deployment/Dockerfile.production
+    container_name: radar-api
+    restart: unless-stopped
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://radar_user:${POSTGRES_PASSWORD:-secure_password_change_me}@postgres:5432/radar_production
+      
+      # Cache Configuration
+      REDIS_URL: redis://redis:6379/0
+      
+      # Security Configuration
+      SECRET_KEY: ${SECRET_KEY:-change_me_in_production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change_me_32_char_encryption_key}
+      
+      # Performance Configuration
+      MAX_CONCURRENCY: ${MAX_CONCURRENCY:-10}
+      MAX_AGENT_CONCURRENCY: ${MAX_AGENT_CONCURRENCY:-5}
+      CACHE_TTL: ${CACHE_TTL:-3600}
+      
+      # Monitoring Configuration
+      ENABLE_METRICS: "true"
+      OTLP_ENDPOINT: ${OTLP_ENDPOINT:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+      # Production Settings
+      ENVIRONMENT: production
+      DEBUG: "false"
+      
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # NGINX Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: radar-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - radar-api
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus Metrics Collection (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: radar-prometheus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./deployment/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+
+  # Grafana Dashboards (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: radar-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployment/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./deployment/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

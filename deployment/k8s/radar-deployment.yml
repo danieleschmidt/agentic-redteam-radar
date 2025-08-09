@@ -1,0 +1,513 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentic-redteam
+  labels:
+    name: agentic-redteam
+    security.level: restricted
+
+---
+# Redis Cache Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: agentic-redteam
+  labels:
+    app: redis
+    component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: cache
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        args:
+        - redis-server
+        - --maxmemory
+        - "1gb"
+        - --maxmemory-policy
+        - allkeys-lru
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "1Gi"
+          requests:
+            cpu: "0.1"
+            memory: "256Mi"
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: agentic-redteam
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# PostgreSQL Database
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: agentic-redteam
+  labels:
+    app: postgres
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: radar_production
+        - name: POSTGRES_USER
+          value: radar_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "0.25"
+            memory: "512Mi"
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - radar_user
+            - -d
+            - radar_production
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - radar_user
+            - -d
+            - radar_production
+          initialDelaySeconds: 30
+          periodSeconds: 20
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: agentic-redteam
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# Agentic RedTeam Radar API Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radar-api
+  namespace: agentic-redteam
+  labels:
+    app: radar-api
+    component: api
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: radar-api
+  template:
+    metadata:
+      labels:
+        app: radar-api
+        component: api
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: radar-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: radar-api
+        image: radar/agentic-redteam:v1.0.0
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: REDIS_URL
+          value: "redis://redis-service:6379/0"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: secret-key
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: encryption-key
+        - name: MAX_CONCURRENCY
+          value: "10"
+        - name: MAX_AGENT_CONCURRENCY
+          value: "5"
+        - name: CACHE_TTL
+          value: "3600"
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ENABLE_METRICS
+          value: "true"
+        volumeMounts:
+        - name: reports-volume
+          mountPath: /app/reports
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: cache-volume
+          mountPath: /app/cache
+        resources:
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+            ephemeral-storage: "10Gi"
+          requests:
+            cpu: "0.5"
+            memory: "1Gi"
+            ephemeral-storage: "5Gi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+      volumes:
+      - name: reports-volume
+        persistentVolumeClaim:
+          claimName: reports-pvc
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: logs-pvc
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      terminationGracePeriodSeconds: 60
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radar-api-service
+  namespace: agentic-redteam
+  labels:
+    app: radar-api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  selector:
+    app: radar-api
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  type: LoadBalancer
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: radar-api-hpa
+  namespace: agentic-redteam
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: radar-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# Network Policy for Security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: radar-network-policy
+  namespace: agentic-redteam
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-system
+    - podSelector:
+        matchLabels:
+          app: radar-api
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to: []  # Allow external API calls
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+
+---
+# PersistentVolumes
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reports-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: shared-storage
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logs-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: shared-storage
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# Secrets (create these separately with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: agentic-redteam
+type: Opaque
+data:
+  password: cGFzc3dvcmRfY2hhbmdlX21l  # base64 encoded
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: agentic-redteam
+type: Opaque
+data:
+  database-url: cG9zdGdyZXNxbDovL3JhZGFyX3VzZXI6cGFzc3dvcmRfY2hhbmdlX21lQHBvc3RncmVzLXNlcnZpY2U6NTQzMi9yYWRhcl9wcm9kdWN0aW9u  # base64 encoded
+  secret-key: c2VjcmV0X2tleV9jaGFuZ2VfbWU=  # base64 encoded
+  encryption-key: ZW5jcnlwdGlvbl9rZXlfMzJfY2hhcmFjdGVycw==  # base64 encoded
+
+---
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: radar-service-account
+  namespace: agentic-redteam
+  labels:
+    app: radar-api
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-config
+  namespace: agentic-redteam
+data:
+  app.yaml: |
+    scanner:
+      max_concurrency: 10
+      max_agent_concurrency: 5
+      timeout: 30
+      retry_attempts: 3
+      retry_delay: 1.0
+      scanner_version: "1.0.0"
+    
+    cache:
+      backend: "redis"
+      default_ttl: 3600
+      max_size: 1000
+    
+    security:
+      enable_input_sanitization: true
+      max_payload_size: 10000
+      audit_logging: true
+    
+    reporting:
+      format: "json"
+      output_dir: "/app/reports"
+      compress: true
+    
+    logging:
+      level: "INFO"
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
