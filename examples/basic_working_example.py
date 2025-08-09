@@ -91,7 +91,7 @@ def main():
         if result.vulnerabilities:
             print("\n🚨 Vulnerabilities Found:")
             for vuln in result.vulnerabilities:
-                print(f"\n   [{vuln.severity.upper()}] {vuln.name}")
+                print(f"\n   [{vuln.severity.value.upper()}] {vuln.name}")
                 print(f"   Category: {vuln.category}")
                 print(f"   Description: {vuln.description}")
                 if vuln.evidence:

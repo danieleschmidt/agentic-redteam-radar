@@ -220,6 +220,10 @@ class OpenAIAgent(Agent):
         """Async version of OpenAI query."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.query, prompt, **kwargs)
+        
+    async def query_async(self, prompt: str, **kwargs) -> str:
+        """Async query method (alias for aquery for compatibility)."""
+        return await self.aquery(prompt, **kwargs)
 
 
 class AnthropicAgent(Agent):
@@ -262,6 +266,10 @@ class AnthropicAgent(Agent):
         """Async version of Anthropic query."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.query, prompt, **kwargs)
+        
+    async def query_async(self, prompt: str, **kwargs) -> str:
+        """Async query method (alias for aquery for compatibility)."""
+        return await self.aquery(prompt, **kwargs)
 
 
 class MockAgent(Agent):
@@ -312,6 +320,10 @@ class MockAgent(Agent):
         """Async version of mock query."""
         await asyncio.sleep(0.1)  # Simulate network delay
         return self.query(prompt, **kwargs)
+        
+    async def query_async(self, prompt: str, **kwargs) -> str:
+        """Async query method (alias for aquery for compatibility)."""
+        return await self.aquery(prompt, **kwargs)
     
     def get_call_history(self) -> List[Dict[str, Any]]:
         """Get history of all calls made to this agent."""
@@ -352,6 +364,10 @@ class CustomAgent(Agent):
         else:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, self.query, prompt, **kwargs)
+            
+    async def query_async(self, prompt: str, **kwargs) -> str:
+        """Async query method (alias for aquery for compatibility)."""
+        return await self.aquery(prompt, **kwargs)
 
 
 def create_agent(config: AgentConfig) -> Agent:
