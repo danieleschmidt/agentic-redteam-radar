@@ -9,6 +9,7 @@ import re
 import html
 import json
 import base64
+import logging
 from typing import Any, Dict, List, Optional, Union, Tuple
 from urllib.parse import urlparse, unquote
 from pathlib import Path

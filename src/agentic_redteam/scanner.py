@@ -25,9 +25,17 @@ except ImportError:
     from .config import RadarConfig
 from .utils.logger import setup_logger
 from .monitoring.telemetry import get_metrics_collector, get_performance_monitor
+from .monitoring.error_handler import get_error_handler, ErrorCategory, ErrorSeverity
 from .security.input_sanitizer import InputSanitizer, SecurityPolicy
 from .performance.optimizer import get_performance_optimizer, profile_performance
 from .cache.manager import get_cache_manager
+from .reliability.health_monitor import HealthMonitor
+from .reliability.graceful_degradation import DegradationManager, DegradationLevel
+from .scaling.auto_scaler import AutoScaler, ScalingMetrics, ScalingPolicy, ScalingTrigger
+from .scaling.load_balancer import LoadBalancer, LoadBalancingStrategy, WorkerNode
+from .scaling.resource_pool import ResourceManager, PoolStrategy
+from .scaling.performance_tuner import PerformanceTuner, OptimizationLevel
+from .scaling.multi_tenant import MultiTenantManager, TenantQuota, TenantPriority
 
 
 @dataclass
@@ -82,6 +90,24 @@ class RadarScanner:
         self.performance_optimizer = get_performance_optimizer()
         self.cache_manager = get_cache_manager()
         
+        # Reliability and resilience components
+        self.error_handler = get_error_handler()
+        self.health_monitor = HealthMonitor()
+        self.degradation_manager = DegradationManager()
+        
+        # Generation 3: Advanced scaling and optimization components
+        self.auto_scaler = AutoScaler()
+        self.load_balancer = LoadBalancer(LoadBalancingStrategy.ADAPTIVE)
+        self.resource_manager = ResourceManager()
+        self.performance_tuner = PerformanceTuner()
+        self.multi_tenant_manager = MultiTenantManager()
+        
+        # Register scanner-specific health checks
+        self._register_scanner_health_checks()
+        
+        # Setup Generation 3 scaling features
+        self._setup_scaling_systems()
+        
         # Resource pooling and concurrency control
         self.agent_semaphore = asyncio.Semaphore(getattr(config, 'max_agent_concurrency', 3))
         self.pattern_semaphore = asyncio.Semaphore(getattr(config, 'max_concurrency', 5))
@@ -95,6 +121,9 @@ class RadarScanner:
         
         self._load_default_patterns()
         self._setup_health_checks()
+        self._setup_reliability_systems()
+        
+        self.logger.info(f"Scanner initialized with Generation 3 scaling capabilities")
     
     def _load_default_patterns(self) -> None:
         """Load default attack patterns."""
@@ -156,8 +185,13 @@ class RadarScanner:
         Returns:
             ScanResult containing all vulnerabilities and statistics
         """
-        # Start performance monitoring
+        # Start performance monitoring and reliability systems
         await self.performance_optimizer.start()
+        await self.health_monitor.start_monitoring()
+        await self.degradation_manager.start_monitoring()
+        
+        # Start Generation 3 scaling systems
+        await self.start_scaling_systems()
         
         # Apply adaptive optimizations if enabled
         if self.optimization_enabled:
@@ -199,11 +233,16 @@ class RadarScanner:
             active_semaphore = self.pattern_semaphore
             
             async def run_pattern(pattern: AttackPattern) -> List[AttackResult]:
-                """Run a single attack pattern with concurrency control."""
+                """Run a single attack pattern with enhanced error handling."""
                 async with active_semaphore:
                     try:
                         self.logger.debug(f"Executing pattern: {pattern.name}")
-                        results = await pattern.execute(agent, self.config)
+                        
+                        # Use error handler with circuit breaker protection
+                        results = await self.error_handler.with_circuit_breaker(
+                            f"pattern_{pattern.name}",
+                            pattern.execute(agent, self.config)
+                        )
                         
                         progress.completed_patterns += 1
                         if progress_callback:
@@ -212,6 +251,18 @@ class RadarScanner:
                         return results
                         
                     except Exception as e:
+                        # Enhanced error handling with categorization
+                        await self.error_handler.handle_error(
+                            e, 
+                            context={
+                                "pattern_name": pattern.name,
+                                "agent_name": agent.name,
+                                "scan_id": scan_id
+                            },
+                            category=ErrorCategory.ATTACK,
+                            severity=ErrorSeverity.MEDIUM
+                        )
+                        
                         self.logger.error(f"Pattern {pattern.name} failed: {e}")
                         self.error_count += 1
                         progress.completed_patterns += 1
@@ -460,29 +511,60 @@ class RadarScanner:
     
     def get_health_status(self) -> Dict[str, Any]:
         """
-        Get comprehensive scanner health status.
+        Get comprehensive scanner health status including reliability metrics.
         
         Returns:
-            Health status dictionary
+            Enhanced health status dictionary
         """
         try:
+            # Get base performance status
             base_status = self.performance_monitor.get_health_status()
             
+            # Get system health from monitor
+            system_health = self.health_monitor.get_current_health()
+            
+            # Get degradation status
+            degradation_status = self.degradation_manager.get_degradation_status()
+            
+            # Get error handler summary
+            error_summary = self.error_handler.get_error_stats()
+            
+            # Scanner-specific status
             scanner_status = {
                 'scanner_healthy': self.is_healthy,
                 'scan_count': self.scan_count,
                 'error_count': self.error_count,
                 'pattern_count': len(self.attack_patterns),
-                'error_rate': self.error_count / max(self.scan_count, 1)
+                'error_rate': self.error_count / max(self.scan_count, 1),
+                'optimization_enabled': self.optimization_enabled
             }
             
-            return {**base_status, 'scanner': scanner_status}
-        except Exception as e:
-            self.logger.error(f"Error getting health status: {e}")
             return {
-                'status': 'unknown',
+                **base_status,
+                'scanner': scanner_status,
+                'system_health': {
+                    'status': system_health.status.value,
+                    'score': system_health.score,
+                    'issues': system_health.issues,
+                    'recommendations': system_health.recommendations,
+                    'cpu_percent': system_health.metrics.cpu_percent,
+                    'memory_percent': system_health.metrics.memory_percent,
+                    'disk_percent': system_health.metrics.disk_percent
+                },
+                'degradation': degradation_status,
+                'error_handling': error_summary,
+                'reliability_systems_active': {
+                    'health_monitor': self.health_monitor._is_monitoring,
+                    'degradation_manager': self.degradation_manager._is_monitoring
+                }
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting comprehensive health status: {e}")
+            return {
+                'status': 'error',
                 'error': str(e),
-                'timestamp': time.time()
+                'timestamp': time.time(),
+                'fallback_healthy': self.is_healthy
             }
     
     def validate_input(self, input_data: Any, context: str = "general") -> Tuple[Any, List[str]]:
@@ -542,6 +624,284 @@ class RadarScanner:
                 self.logger.info("Performance data reset for continued optimization")
             
             await self.performance_optimizer.stop()
+            await self.health_monitor.stop_monitoring()
+            await self.degradation_manager.stop_monitoring()
+            
+            # Stop Generation 3 scaling systems
+            await self.stop_scaling_systems()
             
         except Exception as e:
             self.logger.error(f"Error during resource cleanup: {e}")
+    
+    def _register_scanner_health_checks(self):
+        """Register scanner-specific health checks."""
+        
+        def scan_capacity_check() -> bool:
+            """Check if scanner has capacity for new scans."""
+            return self.error_count < 50 and self.is_healthy
+        
+        def pattern_health_check() -> bool:
+            """Check if attack patterns are healthy."""
+            return len(self.attack_patterns) > 0
+        
+        def semaphore_health_check() -> bool:
+            """Check if semaphores are healthy."""
+            agent_healthy = self.agent_semaphore._value >= 0
+            pattern_healthy = self.pattern_semaphore._value >= 0
+            return agent_healthy and pattern_healthy
+        
+        # Register health checks
+        self.health_monitor.register_health_check(
+            "scanner_capacity", scan_capacity_check, 
+            critical=True, interval=30.0
+        )
+        self.health_monitor.register_health_check(
+            "attack_patterns", pattern_health_check,
+            critical=True, interval=60.0
+        )
+        self.health_monitor.register_health_check(
+            "concurrency_controls", semaphore_health_check,
+            critical=False, interval=45.0
+        )
+    
+    def _setup_reliability_systems(self):
+        """Setup reliability and resilience systems."""
+        
+        # Setup degradation rules specific to scanning
+        def high_error_rate():
+            """Check for high scan error rate."""
+            if self.scan_count == 0:
+                return False
+            error_rate = self.error_count / self.scan_count
+            return error_rate > 0.3  # 30% error rate threshold
+        
+        def resource_pressure():
+            """Check for system resource pressure."""
+            try:
+                import psutil
+                cpu = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory().percent
+                return cpu > 80 or memory > 85
+            except:
+                return False
+        
+        def concurrent_scan_overload():
+            """Check for too many concurrent scans."""
+            # If semaphores are exhausted
+            return (self.agent_semaphore._value <= 0 and 
+                   self.pattern_semaphore._value <= 0)
+        
+        # Register degradation rules
+        self.degradation_manager.add_degradation_rule(
+            "high_scan_errors", high_error_rate, 
+            DegradationLevel.MODERATE, priority=2
+        )
+        self.degradation_manager.add_degradation_rule(
+            "resource_pressure", resource_pressure,
+            DegradationLevel.LIGHT, priority=1
+        )
+        self.degradation_manager.add_degradation_rule(
+            "scan_overload", concurrent_scan_overload,
+            DegradationLevel.LIGHT, priority=1
+        )
+        
+        # Setup degradation actions
+        def reduce_scan_concurrency():
+            """Reduce concurrent scan operations."""
+            self.agent_semaphore = asyncio.Semaphore(max(1, self.agent_semaphore._value // 2))
+            self.pattern_semaphore = asyncio.Semaphore(max(1, self.pattern_semaphore._value // 2))
+            self.logger.info("Reduced scan concurrency due to degradation")
+        
+        def limit_attack_patterns():
+            """Limit to core attack patterns only."""
+            if len(self.attack_patterns) > 2:
+                # Keep only the first 2 patterns (typically most important)
+                self.attack_patterns = self.attack_patterns[:2]
+                self.logger.info("Limited attack patterns due to degradation")
+        
+        def disable_optimization():
+            """Disable performance optimization to reduce overhead."""
+            self.optimization_enabled = False
+            self.logger.info("Disabled optimization due to degradation")
+        
+        # Rollback actions
+        def restore_concurrency():
+            """Restore normal concurrency levels."""
+            max_agent_concurrency = getattr(self.config, 'max_agent_concurrency', 3)
+            max_concurrency = getattr(self.config, 'max_concurrency', 5)
+            self.agent_semaphore = asyncio.Semaphore(max_agent_concurrency)
+            self.pattern_semaphore = asyncio.Semaphore(max_concurrency)
+            self.logger.info("Restored normal scan concurrency")
+        
+        def restore_optimization():
+            """Re-enable performance optimization."""
+            self.optimization_enabled = True
+            self.logger.info("Re-enabled optimization")
+        
+        # Register degradation actions
+        self.degradation_manager.add_degradation_action(
+            DegradationLevel.LIGHT, "reduce_concurrency", reduce_scan_concurrency,
+            rollback_action=restore_concurrency,
+            description="Reduce concurrent scan operations to lower resource usage"
+        )
+        self.degradation_manager.add_degradation_action(
+            DegradationLevel.MODERATE, "limit_patterns", limit_attack_patterns,
+            description="Run only core attack patterns to reduce processing load"
+        )
+        self.degradation_manager.add_degradation_action(
+            DegradationLevel.LIGHT, "disable_optimization", disable_optimization,
+            rollback_action=restore_optimization,
+            description="Disable performance optimization to reduce overhead"
+        )
+    
+    def _setup_scaling_systems(self):
+        """Setup Generation 3 scaling and optimization systems."""
+        
+        # Auto-scaler configuration
+        def get_scan_metrics():
+            """Provide current scanner metrics to auto-scaler."""
+            try:
+                import psutil
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                memory_percent = memory.percent
+                
+                return ScalingMetrics(
+                    cpu_percent=cpu_percent,
+                    memory_percent=memory_percent,
+                    queue_length=len(asyncio.all_tasks()),  # Approximation
+                    active_scans=self.scan_count,
+                    pending_scans=0,  # Would track actual pending scans
+                    throughput=max(0.0, self.scan_count / max(time.time() - getattr(self, '_start_time', time.time()), 1.0)),
+                    error_rate=self.error_count / max(self.scan_count, 1)
+                )
+            except Exception as e:
+                self.logger.error(f"Error collecting scaling metrics: {e}")
+                return ScalingMetrics()
+        
+        def scale_up_callback(additional_instances: int):
+            """Handle scale-up events."""
+            self.logger.info(f"Auto-scaler requesting scale up by {additional_instances} instances")
+            # Increase concurrency limits
+            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
+            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters) 
+            
+            new_agent_limit = min(20, current_agent_limit + additional_instances)
+            new_pattern_limit = min(25, current_pattern_limit + additional_instances * 2)
+            
+            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
+            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+            
+            self.logger.info(f"Scaled up: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")
+        
+        def scale_down_callback(removed_instances: int):
+            """Handle scale-down events."""
+            self.logger.info(f"Auto-scaler requesting scale down by {removed_instances} instances")
+            # Decrease concurrency limits but maintain minimums
+            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
+            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters)
+            
+            new_agent_limit = max(1, current_agent_limit - removed_instances)  
+            new_pattern_limit = max(2, current_pattern_limit - removed_instances * 2)
+            
+            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
+            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+            
+            self.logger.info(f"Scaled down: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")
+        
+        # Configure auto-scaler
+        self.auto_scaler.set_callbacks(
+            scale_up=scale_up_callback,
+            scale_down=scale_down_callback,
+            metrics_provider=get_scan_metrics
+        )
+        
+        # Custom scaling policy for scan queue management
+        queue_policy = ScalingPolicy(
+            name="scan_queue_management",
+            trigger=ScalingTrigger.QUEUE_LENGTH,
+            scale_up_threshold=5.0,    # 5 pending scans
+            scale_down_threshold=1.0,  # 1 pending scan
+            cooldown_period=120.0,     # 2 minutes cooldown
+            min_instances=1,
+            max_instances=15,
+            scale_up_increment=2,      # Scale up more aggressively
+            scale_down_increment=1
+        )
+        self.auto_scaler.add_scaling_policy(queue_policy)
+        
+        # Performance tuner configuration
+        # Apply balanced profile by default
+        self.performance_tuner.apply_profile('balanced')
+        
+        # Resource pools for common resources
+        def create_scan_worker():
+            """Factory for scan worker resources."""
+            return {
+                'id': f"worker_{time.time()}",
+                'created_at': time.time(),
+                'scan_count': 0
+            }
+        
+        def create_cache_connection():
+            """Factory for cache connections.""" 
+            return {
+                'id': f"cache_{time.time()}",
+                'connection': None,  # Would be actual cache connection
+                'created_at': time.time()
+            }
+        
+        # Create resource pools
+        self.resource_manager.create_pool(
+            "scan_workers",
+            create_scan_worker,
+            min_size=2,
+            max_size=10,
+            strategy=PoolStrategy.DYNAMIC
+        )
+        
+        self.resource_manager.create_pool(
+            "cache_connections", 
+            create_cache_connection,
+            min_size=1,
+            max_size=5,
+            strategy=PoolStrategy.ELASTIC
+        )
+        
+        # Multi-tenancy setup
+        # Create default tenant for basic usage
+        default_quota = TenantQuota(
+            max_concurrent_scans=5,
+            max_cpu_percent=30.0,
+            max_memory_mb=512,
+            max_requests_per_minute=100,
+            priority=TenantPriority.NORMAL
+        )
+        
+        self.multi_tenant_manager.create_tenant("default", quota=default_quota)
+        
+        self.logger.info("Generation 3 scaling systems configured successfully")
+        
+    async def start_scaling_systems(self):
+        """Start all Generation 3 scaling systems."""
+        try:
+            await self.auto_scaler.start_monitoring()
+            await self.load_balancer.start_health_monitoring()  
+            await self.performance_tuner.start_monitoring()
+            await self.multi_tenant_manager.start_monitoring()
+            
+            self.logger.info("All Generation 3 scaling systems started")
+        except Exception as e:
+            self.logger.error(f"Error starting scaling systems: {e}")
+    
+    async def stop_scaling_systems(self):
+        """Stop all Generation 3 scaling systems."""
+        try:
+            await self.auto_scaler.stop_monitoring()
+            await self.load_balancer.stop_health_monitoring()
+            await self.performance_tuner.stop_monitoring() 
+            await self.multi_tenant_manager.stop_monitoring()
+            
+            self.logger.info("All Generation 3 scaling systems stopped")
+        except Exception as e:
+            self.logger.error(f"Error stopping scaling systems: {e}")
