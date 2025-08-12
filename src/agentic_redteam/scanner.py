@@ -105,12 +105,12 @@ class RadarScanner:
         # Register scanner-specific health checks
         self._register_scanner_health_checks()
         
-        # Setup Generation 3 scaling features
-        self._setup_scaling_systems()
+        # Setup Generation 3 scaling features (deferred for async context)
+        self._scaling_systems_setup = False
         
-        # Resource pooling and concurrency control
-        self.agent_semaphore = asyncio.Semaphore(getattr(config, 'max_agent_concurrency', 3))
-        self.pattern_semaphore = asyncio.Semaphore(getattr(config, 'max_concurrency', 5))
+        # Resource pooling and concurrency control (lazy init for async)
+        self.agent_semaphore = None
+        self.pattern_semaphore = None
         
         # Scanner state
         self.attack_patterns: List[AttackPattern] = []
@@ -189,6 +189,9 @@ class RadarScanner:
         await self.performance_optimizer.start()
         await self.health_monitor.start_monitoring()
         await self.degradation_manager.start_monitoring()
+        
+        # Initialize async components if not done yet
+        await self._ensure_async_components_initialized()
         
         # Start Generation 3 scaling systems
         await self.start_scaling_systems()
@@ -354,18 +357,6 @@ class RadarScanner:
             
             raise RuntimeError(f"Security scan failed: {e}") from e
     
-    def scan_sync(self, agent: Agent, progress_callback=None) -> ScanResult:
-        """
-        Synchronous wrapper for scan method.
-        
-        Args:
-            agent: Agent instance to test
-            progress_callback: Optional callback for progress updates
-            
-        Returns:
-            ScanResult containing all vulnerabilities and statistics
-        """
-        return asyncio.run(self.scan(agent, progress_callback))
     
     @profile_performance
     async def scan_multiple(self, agents: List[Agent], progress_callback=None, 
@@ -754,133 +745,142 @@ class RadarScanner:
             description="Disable performance optimization to reduce overhead"
         )
     
-    def _setup_scaling_systems(self):
-        """Setup Generation 3 scaling and optimization systems."""
+    def scan_sync(self, agent: Agent, progress_callback=None, enable_async_features: bool = False) -> ScanResult:
+        """
+        Synchronous wrapper for scan method with optional async features.
         
-        # Auto-scaler configuration
-        def get_scan_metrics():
-            """Provide current scanner metrics to auto-scaler."""
-            try:
-                import psutil
-                cpu_percent = psutil.cpu_percent(interval=0.1)
-                memory = psutil.virtual_memory()
-                memory_percent = memory.percent
+        Args:
+            agent: Agent instance to test
+            progress_callback: Optional callback for progress updates
+            enable_async_features: Whether to enable async scaling features
+            
+        Returns:
+            ScanResult containing all vulnerabilities and statistics
+        """
+        async def run_scan():
+            if enable_async_features:
+                return await self.scan(agent, progress_callback)
+            else:
+                # Simple scan without advanced async features
+                return await self._simple_scan(agent, progress_callback)
+        
+        return asyncio.run(run_scan())
+    
+    async def _simple_scan(self, agent: Agent, progress_callback=None) -> ScanResult:
+        """Simple scan without advanced scaling features for sync usage."""
+        # Initialize minimal async components
+        if self.agent_semaphore is None:
+            self.agent_semaphore = asyncio.Semaphore(getattr(self.config, 'max_agent_concurrency', 3))
+        if self.pattern_semaphore is None:
+            self.pattern_semaphore = asyncio.Semaphore(getattr(self.config, 'max_concurrency', 5))
+        
+        # Start minimal monitoring
+        await self.performance_optimizer.start()
+        
+        # Start metrics collection
+        scan_id = self.metrics_collector.start_scan_metrics(agent.name)
+        self.logger.info(f"Starting simple security scan of agent: {agent.name} [scan_id: {scan_id}]")
+        
+        try:
+            # Increment scan count
+            self.scan_count += 1
+            
+            # Validate agent before scanning
+            agent_validation_errors = self.validate_agent(agent)
+            if agent_validation_errors:
+                self.error_count += 1
+                raise ValueError(f"Agent validation failed: {'; '.join(agent_validation_errors)}")
+            
+            progress = ScanProgress(total_patterns=len(self.attack_patterns))
+            vulnerabilities: List[Vulnerability] = []
+            attack_results: List[AttackResult] = []
+        
+            async def run_pattern(pattern: AttackPattern) -> List[AttackResult]:
+                """Run a single attack pattern."""
+                async with self.pattern_semaphore:
+                    try:
+                        self.logger.debug(f"Executing pattern: {pattern.name}")
+                        results = await pattern.execute(agent, self.config)
+                        
+                        progress.completed_patterns += 1
+                        if progress_callback:
+                            progress_callback(progress)
+                        
+                        return results
+                        
+                    except Exception as e:
+                        self.logger.error(f"Pattern {pattern.name} failed: {e}")
+                        self.error_count += 1
+                        progress.completed_patterns += 1
+                        if progress_callback:
+                            progress_callback(progress)
+                        return []
+            
+            # Execute all patterns concurrently
+            tasks = [run_pattern(pattern) for pattern in self.attack_patterns]
+            pattern_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results
+            for results in pattern_results:
+                if isinstance(results, Exception):
+                    self.logger.error(f"Pattern execution failed: {results}")
+                    self.error_count += 1
+                    continue
                 
-                return ScalingMetrics(
-                    cpu_percent=cpu_percent,
-                    memory_percent=memory_percent,
-                    queue_length=len(asyncio.all_tasks()),  # Approximation
-                    active_scans=self.scan_count,
-                    pending_scans=0,  # Would track actual pending scans
-                    throughput=max(0.0, self.scan_count / max(time.time() - getattr(self, '_start_time', time.time()), 1.0)),
-                    error_rate=self.error_count / max(self.scan_count, 1)
-                )
-            except Exception as e:
-                self.logger.error(f"Error collecting scaling metrics: {e}")
-                return ScalingMetrics()
-        
-        def scale_up_callback(additional_instances: int):
-            """Handle scale-up events."""
-            self.logger.info(f"Auto-scaler requesting scale up by {additional_instances} instances")
-            # Increase concurrency limits
-            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
-            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters) 
+                attack_results.extend(results)
+                
+                # Extract vulnerabilities
+                for result in results:
+                    if result.is_vulnerable:
+                        vulnerability = Vulnerability(
+                            name=result.attack_name,
+                            description=result.description,
+                            severity=result.severity,
+                            category=result.category,
+                            evidence=result.evidence,
+                            remediation=result.remediation,
+                            cwe_id=result.cwe_id,
+                            cvss_score=result.cvss_score
+                        )
+                        vulnerabilities.append(vulnerability)
+                        progress.vulnerabilities_found += 1
             
-            new_agent_limit = min(20, current_agent_limit + additional_instances)
-            new_pattern_limit = min(25, current_pattern_limit + additional_instances * 2)
+            # Create scan result
+            scan_result = ScanResult(
+                agent_name=agent.name,
+                agent_config=agent.get_config(),
+                vulnerabilities=vulnerabilities,
+                attack_results=attack_results,
+                scan_duration=progress.elapsed_time,
+                patterns_executed=len(self.attack_patterns),
+                total_tests=len(attack_results),
+                scanner_version=getattr(self.config, 'scanner_version', '0.1.0')
+            )
             
-            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
-            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+            # Finalize metrics
+            self.metrics_collector.finalize_scan_metrics(scan_id)
             
-            self.logger.info(f"Scaled up: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")
-        
-        def scale_down_callback(removed_instances: int):
-            """Handle scale-down events."""
-            self.logger.info(f"Auto-scaler requesting scale down by {removed_instances} instances")
-            # Decrease concurrency limits but maintain minimums
-            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
-            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters)
+            self.logger.info(
+                f"Simple scan completed: {len(vulnerabilities)} vulnerabilities found "
+                f"in {progress.elapsed_time:.2f}s [scan_id: {scan_id}]"
+            )
             
-            new_agent_limit = max(1, current_agent_limit - removed_instances)  
-            new_pattern_limit = max(2, current_pattern_limit - removed_instances * 2)
+            return scan_result
             
-            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
-            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+        except Exception as e:
+            self.error_count += 1
+            self.logger.error(f"Simple scan failed for agent {agent.name}: {e}")
             
-            self.logger.info(f"Scaled down: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")
-        
-        # Configure auto-scaler
-        self.auto_scaler.set_callbacks(
-            scale_up=scale_up_callback,
-            scale_down=scale_down_callback,
-            metrics_provider=get_scan_metrics
-        )
-        
-        # Custom scaling policy for scan queue management
-        queue_policy = ScalingPolicy(
-            name="scan_queue_management",
-            trigger=ScalingTrigger.QUEUE_LENGTH,
-            scale_up_threshold=5.0,    # 5 pending scans
-            scale_down_threshold=1.0,  # 1 pending scan
-            cooldown_period=120.0,     # 2 minutes cooldown
-            min_instances=1,
-            max_instances=15,
-            scale_up_increment=2,      # Scale up more aggressively
-            scale_down_increment=1
-        )
-        self.auto_scaler.add_scaling_policy(queue_policy)
-        
-        # Performance tuner configuration
-        # Apply balanced profile by default
-        self.performance_tuner.apply_profile('balanced')
-        
-        # Resource pools for common resources
-        def create_scan_worker():
-            """Factory for scan worker resources."""
-            return {
-                'id': f"worker_{time.time()}",
-                'created_at': time.time(),
-                'scan_count': 0
-            }
-        
-        def create_cache_connection():
-            """Factory for cache connections.""" 
-            return {
-                'id': f"cache_{time.time()}",
-                'connection': None,  # Would be actual cache connection
-                'created_at': time.time()
-            }
-        
-        # Create resource pools
-        self.resource_manager.create_pool(
-            "scan_workers",
-            create_scan_worker,
-            min_size=2,
-            max_size=10,
-            strategy=PoolStrategy.DYNAMIC
-        )
-        
-        self.resource_manager.create_pool(
-            "cache_connections", 
-            create_cache_connection,
-            min_size=1,
-            max_size=5,
-            strategy=PoolStrategy.ELASTIC
-        )
-        
-        # Multi-tenancy setup
-        # Create default tenant for basic usage
-        default_quota = TenantQuota(
-            max_concurrent_scans=5,
-            max_cpu_percent=30.0,
-            max_memory_mb=512,
-            max_requests_per_minute=100,
-            priority=TenantPriority.NORMAL
-        )
-        
-        self.multi_tenant_manager.create_tenant("default", quota=default_quota)
-        
-        self.logger.info("Generation 3 scaling systems configured successfully")
+            # Try to finalize metrics even on failure
+            try:
+                self.metrics_collector.finalize_scan_metrics(scan_id)
+            except:
+                pass
+            
+            raise RuntimeError(f"Security scan failed: {e}") from e
+        finally:
+            # Stop minimal monitoring
+            await self.performance_optimizer.stop()
         
     async def start_scaling_systems(self):
         """Start all Generation 3 scaling systems."""
@@ -905,3 +905,108 @@ class RadarScanner:
             self.logger.info("All Generation 3 scaling systems stopped")
         except Exception as e:
             self.logger.error(f"Error stopping scaling systems: {e}")
+    
+    async def _ensure_async_components_initialized(self):
+        """Ensure async components are initialized (called from async context)."""
+        if self.agent_semaphore is None:
+            self.agent_semaphore = asyncio.Semaphore(getattr(self.config, 'max_agent_concurrency', 3))
+        if self.pattern_semaphore is None:
+            self.pattern_semaphore = asyncio.Semaphore(getattr(self.config, 'max_concurrency', 5))
+        
+        # Setup scaling systems if not done yet
+        if not self._scaling_systems_setup:
+            await self._setup_scaling_systems_async()
+            self._scaling_systems_setup = True
+    
+    async def _setup_scaling_systems_async(self):
+        """Setup Generation 3 scaling systems in async context.""" 
+        # Auto-scaler configuration
+        def get_scan_metrics():
+            """Provide current scanner metrics to auto-scaler."""
+            try:
+                import psutil
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                memory_percent = memory.percent
+                
+                return ScalingMetrics(
+                    cpu_percent=cpu_percent,
+                    memory_percent=memory_percent,
+                    queue_length=len(asyncio.all_tasks()),  # Approximation
+                    active_scans=self.scan_count,
+                    pending_scans=0,  # Would track actual pending scans
+                    throughput=max(0.0, self.scan_count / max(time.time() - getattr(self, '_start_time', time.time()), 1.0)),
+                    error_rate=self.error_count / max(self.scan_count, 1)
+                )
+            except Exception as e:
+                self.logger.error(f"Error collecting scaling metrics: {e}")
+                return ScalingMetrics()
+        
+        # Configure auto-scaler callbacks
+        self.auto_scaler.set_callbacks(
+            scale_up=self._scale_up_callback,
+            scale_down=self._scale_down_callback,
+            metrics_provider=get_scan_metrics
+        )
+        
+        # Custom scaling policy for scan queue management
+        queue_policy = ScalingPolicy(
+            name="scan_queue_management",
+            trigger=ScalingTrigger.QUEUE_LENGTH,
+            scale_up_threshold=5.0,    # 5 pending scans
+            scale_down_threshold=1.0,  # 1 pending scan
+            cooldown_period=120.0,     # 2 minutes cooldown
+            min_instances=1,
+            max_instances=15,
+            scale_up_increment=2,      # Scale up more aggressively
+            scale_down_increment=1
+        )
+        self.auto_scaler.add_scaling_policy(queue_policy)
+        
+        # Performance tuner configuration - apply balanced profile by default
+        self.performance_tuner.apply_profile('balanced')
+        
+        # Multi-tenancy setup - create default tenant for basic usage
+        default_quota = TenantQuota(
+            max_concurrent_scans=5,
+            max_cpu_percent=30.0,
+            max_memory_mb=512,
+            max_requests_per_minute=100,
+            priority=TenantPriority.NORMAL
+        )
+        
+        self.multi_tenant_manager.create_tenant("default", quota=default_quota)
+        
+        self.logger.info("Generation 3 scaling systems configured successfully")
+    
+    def _scale_up_callback(self, additional_instances: int):
+        """Handle scale-up events."""
+        self.logger.info(f"Auto-scaler requesting scale up by {additional_instances} instances")
+        # Increase concurrency limits
+        if self.agent_semaphore:
+            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
+            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters) 
+            
+            new_agent_limit = min(20, current_agent_limit + additional_instances)
+            new_pattern_limit = min(25, current_pattern_limit + additional_instances * 2)
+            
+            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
+            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+            
+            self.logger.info(f"Scaled up: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")
+    
+    def _scale_down_callback(self, removed_instances: int):
+        """Handle scale-down events."""
+        self.logger.info(f"Auto-scaler requesting scale down by {removed_instances} instances")
+        # Decrease concurrency limits but maintain minimums
+        if self.agent_semaphore:
+            current_agent_limit = self.agent_semaphore._value + len(self.agent_semaphore._waiters)
+            current_pattern_limit = self.pattern_semaphore._value + len(self.pattern_semaphore._waiters)
+            
+            new_agent_limit = max(1, current_agent_limit - removed_instances)  
+            new_pattern_limit = max(2, current_pattern_limit - removed_instances * 2)
+            
+            self.agent_semaphore = asyncio.Semaphore(new_agent_limit)
+            self.pattern_semaphore = asyncio.Semaphore(new_pattern_limit)
+            
+            self.logger.info(f"Scaled down: agent_concurrency={new_agent_limit}, pattern_concurrency={new_pattern_limit}")

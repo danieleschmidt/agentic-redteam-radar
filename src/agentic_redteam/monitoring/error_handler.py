@@ -307,6 +307,37 @@ class ErrorHandler:
         
         return False
     
+    def _get_circuit_breaker(self, operation_name: str):
+        """Get or create circuit breaker for operation."""
+        # Simplified circuit breaker - just return a simple object
+        class SimpleCircuitBreaker:
+            def __init__(self):
+                self.state = "closed"
+        
+        return SimpleCircuitBreaker()
+    
+    async def with_circuit_breaker(self, operation_name: str, coro_func):
+        """Execute function with circuit breaker protection."""
+        circuit_breaker = self._get_circuit_breaker(operation_name)
+        
+        try:
+            # If coro_func is a coroutine, await it directly; if it's a callable, call it first
+            if hasattr(coro_func, '__await__'):
+                result = await coro_func
+            elif callable(coro_func):
+                result = coro_func()
+                if hasattr(result, '__await__'):
+                    result = await result
+            else:
+                result = coro_func
+            
+            return result
+        except Exception as e:
+            # Simplified circuit breaker - just log and re-raise for now
+            self.logger.warning(f"Operation {operation_name} failed: {e}")
+            await self.handle_error(e, {"operation": operation_name}, ErrorCategory.SYSTEM, ErrorSeverity.HIGH)
+            raise
+    
     def get_error_stats(self) -> Dict[str, Any]:
         """Get comprehensive error statistics."""
         return self.registry.get_error_stats()

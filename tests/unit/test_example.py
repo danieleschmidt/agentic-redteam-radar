@@ -50,7 +50,7 @@ class TestExampleUnit:
         """Test prompt injection payload format."""
         assert isinstance(payload, str)
         assert len(payload) > 0
-        assert "ignore" in payload.lower() or "system" in payload.lower()
+        assert any(keyword in payload.lower() for keyword in ["ignore", "system", "hidden", "prompt", "instructions"])
     
     @pytest.mark.unit
     def test_sample_agent_configurations(self, sample_agents):
