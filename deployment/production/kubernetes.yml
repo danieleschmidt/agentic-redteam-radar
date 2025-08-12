@@ -1,0 +1,386 @@
+# Kubernetes deployment for Agentic RedTeam Radar
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentic-redteam
+  labels:
+    name: agentic-redteam
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radar-config
+  namespace: agentic-redteam
+data:
+  RADAR_MAX_CONCURRENCY: "10"
+  RADAR_MAX_AGENT_CONCURRENCY: "5"
+  RADAR_TIMEOUT: "60"
+  RADAR_LOG_LEVEL: "INFO"
+  RADAR_CACHE_BACKEND: "redis"
+  RADAR_REPORT_DIR: "/app/reports"
+  RADAR_ENABLED_PATTERNS: "prompt_injection,info_disclosure,policy_bypass,chain_of_thought"
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: radar-secrets
+  namespace: agentic-redteam
+type: Opaque
+data:
+  # Base64 encoded values - change these in production!
+  RADAR_DATABASE_URL: cG9zdGdyZXNxbDovL3JhZGFyOnJhZGFyX3Bhc3N3b3JkQHBvc3RncmVzOjU0MzIvcmFkYXJfZGI=
+  RADAR_CACHE_URL: cmVkaXM6Ly9yZWRpczozNjM3OS8w
+  POSTGRES_PASSWORD: cmFkYXJfcGFzc3dvcmQ=
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: agentic-redteam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "radar_db"
+        - name: POSTGRES_USER
+          value: "radar"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: radar-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: agentic-redteam
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: agentic-redteam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command: ["redis-server"]
+        args: ["--appendonly", "yes", "--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru"]
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: agentic-redteam
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+---
+# Redis PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Scanner Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-redteam-scanner
+  namespace: agentic-redteam
+spec:
+  replicas: 3  # Horizontal scaling
+  selector:
+    matchLabels:
+      app: agentic-redteam-scanner
+  template:
+    metadata:
+      labels:
+        app: agentic-redteam-scanner
+    spec:
+      containers:
+      - name: scanner
+        image: agentic-redteam:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: radar-config
+        env:
+        - name: RADAR_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: radar-secrets
+              key: RADAR_DATABASE_URL
+        - name: RADAR_CACHE_URL
+          valueFrom:
+            secretKeyRef:
+              name: radar-secrets
+              key: RADAR_CACHE_URL
+        volumeMounts:
+        - name: reports-storage
+          mountPath: /app/reports
+        - name: logs-storage
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+      volumes:
+      - name: reports-storage
+        persistentVolumeClaim:
+          claimName: reports-pvc
+      - name: logs-storage
+        emptyDir: {}
+---
+# Scanner Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-redteam-scanner
+  namespace: agentic-redteam
+spec:
+  selector:
+    app: agentic-redteam-scanner
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+# Reports PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reports-pvc
+  namespace: agentic-redteam
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agentic-redteam-ingress
+  namespace: agentic-redteam
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/rate-limit: "10"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - agentic-redteam.yourdomain.com
+    secretName: agentic-redteam-tls
+  rules:
+  - host: agentic-redteam.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: agentic-redteam-scanner
+            port:
+              number: 8080
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agentic-redteam-hpa
+  namespace: agentic-redteam
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agentic-redteam-scanner
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+---
+# Network Policy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agentic-redteam-netpol
+  namespace: agentic-redteam
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  - from:
+    - podSelector:
+        matchLabels:
+          app: agentic-redteam-scanner
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379

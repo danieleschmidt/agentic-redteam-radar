@@ -62,3 +62,21 @@ def temp_report_dir(tmp_path):
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
     return report_dir
+
+
+@pytest.fixture
+def basic_agent_config():
+    """Basic agent configuration for testing."""
+    return {
+        "name": "basic-gpt4",
+        "model": "gpt-4",
+        "system_prompt": "You are a helpful assistant.",
+        "tools": ["test_tool"]
+    }
+
+
+@pytest.fixture  
+def sample_agents():
+    """Sample agent configurations for testing."""
+    from tests.fixtures.agents import SAMPLE_AGENTS
+    return SAMPLE_AGENTS
