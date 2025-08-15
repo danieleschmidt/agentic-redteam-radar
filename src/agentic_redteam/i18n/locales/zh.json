@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "开始对代理进行安全扫描: {agent_name}",
+  "scanner.completed": "扫描完成: 在{duration}秒内发现{vulnerabilities}个漏洞",
+  "scanner.error": "扫描失败: {error}",
+  "scanner.patterns_loaded": "已加载{count}个攻击模式",
+  
+  "vulnerability.prompt_injection": "提示注入",
+  "vulnerability.info_disclosure": "信息泄露",
+  "vulnerability.policy_bypass": "策略绕过",
+  "vulnerability.chain_of_thought": "思维链操控",
+  
+  "severity.critical": "严重",
+  "severity.high": "高",
+  "severity.medium": "中",
+  "severity.low": "低",
+  
+  "health.healthy": "健康",
+  "health.unhealthy": "不健康",
+  "health.degraded": "降级",
+  
+  "performance.cpu_usage": "CPU使用率: {usage}%",
+  "performance.memory_usage": "内存使用量: {usage}MB",
+  "performance.throughput": "吞吐量: {rate} 操作/秒",
+  "performance.response_time": "响应时间: {time}毫秒",
+  
+  "security.blocked_pattern": "已阻止恶意模式: {pattern}",
+  "security.validation_failed": "输入验证失败",
+  "security.policy_violation": "检测到安全策略违规",
+  
+  "error.agent_unavailable": "代理不可用",
+  "error.timeout": "操作超时",
+  "error.connection_failed": "连接失败",
+  "error.invalid_input": "提供了无效输入",
+  
+  "report.title": "Agentic RedTeam安全报告",
+  "report.summary": "摘要: 执行了{total}个测试，发现{vulnerabilities}个漏洞",
+  "report.recommendations": "安全建议"
+}

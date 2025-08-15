@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "Sicherheitsscan des Agenten wird gestartet: {agent_name}",
+  "scanner.completed": "Scan abgeschlossen: {vulnerabilities} Schwachstellen in {duration}s gefunden",
+  "scanner.error": "Scan fehlgeschlagen: {error}",
+  "scanner.patterns_loaded": "{count} Angriffsmuster geladen",
+  
+  "vulnerability.prompt_injection": "Prompt-Injektion",
+  "vulnerability.info_disclosure": "Informationsleckage",
+  "vulnerability.policy_bypass": "Richtlinien-Umgehung",
+  "vulnerability.chain_of_thought": "Denkkettenmanipulation",
+  
+  "severity.critical": "Kritisch",
+  "severity.high": "Hoch",
+  "severity.medium": "Mittel",
+  "severity.low": "Niedrig",
+  
+  "health.healthy": "Gesund",
+  "health.unhealthy": "Ungesund",
+  "health.degraded": "Beeinträchtigt",
+  
+  "performance.cpu_usage": "CPU-Auslastung: {usage}%",
+  "performance.memory_usage": "Speicherverbrauch: {usage}MB",
+  "performance.throughput": "Durchsatz: {rate} Ops/Sek",
+  "performance.response_time": "Antwortzeit: {time}ms",
+  
+  "security.blocked_pattern": "Bösartiges Muster blockiert: {pattern}",
+  "security.validation_failed": "Eingabevalidierung fehlgeschlagen",
+  "security.policy_violation": "Sicherheitsrichtlinienverletzung erkannt",
+  
+  "error.agent_unavailable": "Agent nicht verfügbar",
+  "error.timeout": "Zeitüberschreitung der Operation",
+  "error.connection_failed": "Verbindung fehlgeschlagen",
+  "error.invalid_input": "Ungültige Eingabe bereitgestellt",
+  
+  "report.title": "Agentic RedTeam Sicherheitsbericht",
+  "report.summary": "Zusammenfassung: {total} Tests ausgeführt, {vulnerabilities} Schwachstellen gefunden",
+  "report.recommendations": "Sicherheitsempfehlungen"
+}
