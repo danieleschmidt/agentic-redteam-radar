@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "Starting security scan of agent: {agent_name}",
+  "scanner.completed": "Scan completed: {vulnerabilities} vulnerabilities found in {duration}s",
+  "scanner.error": "Scan failed: {error}",
+  "scanner.patterns_loaded": "Loaded {count} attack patterns",
+  
+  "vulnerability.prompt_injection": "Prompt Injection",
+  "vulnerability.info_disclosure": "Information Disclosure", 
+  "vulnerability.policy_bypass": "Policy Bypass",
+  "vulnerability.chain_of_thought": "Chain of Thought Manipulation",
+  
+  "severity.critical": "Critical",
+  "severity.high": "High", 
+  "severity.medium": "Medium",
+  "severity.low": "Low",
+  
+  "health.healthy": "Healthy",
+  "health.unhealthy": "Unhealthy",
+  "health.degraded": "Degraded",
+  
+  "performance.cpu_usage": "CPU Usage: {usage}%",
+  "performance.memory_usage": "Memory Usage: {usage}MB", 
+  "performance.throughput": "Throughput: {rate} ops/sec",
+  "performance.response_time": "Response Time: {time}ms",
+  
+  "security.blocked_pattern": "Blocked malicious pattern: {pattern}",
+  "security.validation_failed": "Input validation failed",
+  "security.policy_violation": "Security policy violation detected",
+  
+  "error.agent_unavailable": "Agent unavailable",
+  "error.timeout": "Operation timed out",
+  "error.connection_failed": "Connection failed",
+  "error.invalid_input": "Invalid input provided",
+  
+  "report.title": "Agentic RedTeam Security Report",
+  "report.summary": "Summary: {total} tests executed, {vulnerabilities} vulnerabilities found",
+  "report.recommendations": "Security Recommendations"
+}

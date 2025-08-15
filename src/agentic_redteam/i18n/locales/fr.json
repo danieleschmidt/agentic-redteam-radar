@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "Démarrage de l'analyse de sécurité de l'agent: {agent_name}",
+  "scanner.completed": "Analyse terminée: {vulnerabilities} vulnérabilités trouvées en {duration}s",
+  "scanner.error": "Échec de l'analyse: {error}",
+  "scanner.patterns_loaded": "Chargé {count} modèles d'attaque",
+  
+  "vulnerability.prompt_injection": "Injection de Prompt",
+  "vulnerability.info_disclosure": "Divulgation d'Information",
+  "vulnerability.policy_bypass": "Contournement de Politique",
+  "vulnerability.chain_of_thought": "Manipulation de Chaîne de Pensée",
+  
+  "severity.critical": "Critique",
+  "severity.high": "Élevé",
+  "severity.medium": "Moyen",
+  "severity.low": "Faible",
+  
+  "health.healthy": "Sain",
+  "health.unhealthy": "Malsain", 
+  "health.degraded": "Dégradé",
+  
+  "performance.cpu_usage": "Utilisation CPU: {usage}%",
+  "performance.memory_usage": "Utilisation Mémoire: {usage}MB",
+  "performance.throughput": "Débit: {rate} ops/sec",
+  "performance.response_time": "Temps de Réponse: {time}ms",
+  
+  "security.blocked_pattern": "Modèle malveillant bloqué: {pattern}",
+  "security.validation_failed": "Échec de la validation d'entrée",
+  "security.policy_violation": "Violation de politique de sécurité détectée",
+  
+  "error.agent_unavailable": "Agent indisponible",
+  "error.timeout": "Opération expirée",
+  "error.connection_failed": "Échec de connexion",
+  "error.invalid_input": "Entrée invalide fournie",
+  
+  "report.title": "Rapport de Sécurité Agentic RedTeam",
+  "report.summary": "Résumé: {total} tests exécutés, {vulnerabilities} vulnérabilités trouvées",
+  "report.recommendations": "Recommandations de Sécurité"
+}

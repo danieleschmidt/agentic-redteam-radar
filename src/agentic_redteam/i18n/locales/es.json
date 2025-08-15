@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "Iniciando escaneo de seguridad del agente: {agent_name}",
+  "scanner.completed": "Escaneo completado: {vulnerabilities} vulnerabilidades encontradas en {duration}s",
+  "scanner.error": "Escaneo fallido: {error}",
+  "scanner.patterns_loaded": "Cargados {count} patrones de ataque",
+  
+  "vulnerability.prompt_injection": "Inyección de Prompt",
+  "vulnerability.info_disclosure": "Divulgación de Información",
+  "vulnerability.policy_bypass": "Elusión de Políticas", 
+  "vulnerability.chain_of_thought": "Manipulación de Cadena de Pensamiento",
+  
+  "severity.critical": "Crítico",
+  "severity.high": "Alto",
+  "severity.medium": "Medio", 
+  "severity.low": "Bajo",
+  
+  "health.healthy": "Saludable",
+  "health.unhealthy": "No Saludable",
+  "health.degraded": "Degradado",
+  
+  "performance.cpu_usage": "Uso de CPU: {usage}%",
+  "performance.memory_usage": "Uso de Memoria: {usage}MB",
+  "performance.throughput": "Rendimiento: {rate} ops/seg",
+  "performance.response_time": "Tiempo de Respuesta: {time}ms",
+  
+  "security.blocked_pattern": "Patrón malicioso bloqueado: {pattern}",
+  "security.validation_failed": "Falló la validación de entrada",
+  "security.policy_violation": "Violación de política de seguridad detectada",
+  
+  "error.agent_unavailable": "Agente no disponible",
+  "error.timeout": "Operación agotó tiempo",
+  "error.connection_failed": "Conexión fallida",
+  "error.invalid_input": "Entrada inválida proporcionada",
+  
+  "report.title": "Reporte de Seguridad Agentic RedTeam",
+  "report.summary": "Resumen: {total} pruebas ejecutadas, {vulnerabilities} vulnerabilidades encontradas",
+  "report.recommendations": "Recomendaciones de Seguridad"
+}

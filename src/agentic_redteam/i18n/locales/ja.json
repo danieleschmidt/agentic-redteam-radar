@@ -1,0 +1,38 @@
+{
+  "scanner.starting": "エージェントのセキュリティスキャンを開始: {agent_name}",
+  "scanner.completed": "スキャン完了: {duration}秒で{vulnerabilities}個の脆弱性を発見",
+  "scanner.error": "スキャン失敗: {error}",
+  "scanner.patterns_loaded": "{count}個の攻撃パターンを読み込みました",
+  
+  "vulnerability.prompt_injection": "プロンプトインジェクション",
+  "vulnerability.info_disclosure": "情報漏洩",
+  "vulnerability.policy_bypass": "ポリシー回避",
+  "vulnerability.chain_of_thought": "思考連鎖操作",
+  
+  "severity.critical": "重大",
+  "severity.high": "高",
+  "severity.medium": "中",
+  "severity.low": "低",
+  
+  "health.healthy": "健全",
+  "health.unhealthy": "不健全",
+  "health.degraded": "劣化",
+  
+  "performance.cpu_usage": "CPU使用率: {usage}%",
+  "performance.memory_usage": "メモリ使用量: {usage}MB",
+  "performance.throughput": "スループット: {rate} ops/秒",
+  "performance.response_time": "応答時間: {time}ms",
+  
+  "security.blocked_pattern": "悪意のあるパターンをブロック: {pattern}",
+  "security.validation_failed": "入力検証失敗",
+  "security.policy_violation": "セキュリティポリシー違反を検出",
+  
+  "error.agent_unavailable": "エージェント利用不可",
+  "error.timeout": "操作タイムアウト",
+  "error.connection_failed": "接続失敗",
+  "error.invalid_input": "無効な入力が提供されました",
+  
+  "report.title": "Agentic RedTeamセキュリティレポート",
+  "report.summary": "概要: {total}個のテストを実行、{vulnerabilities}個の脆弱性を発見",
+  "report.recommendations": "セキュリティ推奨事項"
+}
