@@ -9,7 +9,10 @@ This module provides advanced reliability features including:
 - Recovery procedures
 """
 
-from .health_monitor import HealthMonitor, HealthCheck, SystemHealth
+try:
+    from .health_monitor import HealthMonitor, HealthCheck, SystemHealth
+except ImportError:
+    from .simple_health_monitor import SimpleHealthMonitor as HealthMonitor, HealthCheck, SystemHealth
 from .failover import FailoverManager, FailoverStrategy
 from .data_integrity import DataIntegrityChecker, IntegrityViolation
 from .graceful_degradation import DegradationManager, DegradationLevel

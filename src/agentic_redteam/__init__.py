@@ -9,7 +9,10 @@ __version__ = "0.1.0"
 __author__ = "Daniel Schmidt"
 __email__ = "daniel@terragonlabs.com"
 
-from .scanner import RadarScanner
+try:
+    from .scanner import RadarScanner
+except ImportError:
+    from .simple_scanner import SimpleRadarScanner as RadarScanner
 from .agent import Agent, create_agent, AgentType, create_mock_agent
 try:
     from .config_simple import RadarConfig
