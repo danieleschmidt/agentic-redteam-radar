@@ -1,0 +1,85 @@
+{
+  "overall_score": 0.9642857142857143,
+  "gates_passed": 6,
+  "total_gates": 7,
+  "pass_rate": 0.8571428571428571,
+  "total_duration_ms": 11633.700370788574,
+  "recommendation": "\u26a0\ufe0f  CONDITIONAL DEPLOYMENT: Significant issues require review before production",
+  "gate_results": [
+    {
+      "name": "Functional Correctness",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 711.5278244018555,
+        "errors": [],
+        "patterns_tested": 4
+      }
+    },
+    {
+      "name": "Performance Benchmarks",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 2176.6433715820312,
+        "errors": [],
+        "single_scan_ms": 708.5127830505371,
+        "throughput_per_sec": 6.856595079237466
+      }
+    },
+    {
+      "name": "Security Validation",
+      "passed": false,
+      "score": 0.75,
+      "details": {
+        "duration_ms": 709.8760604858398,
+        "errors": [
+          "Input sanitization rate too low: 0.80"
+        ],
+        "vulnerabilities_found": 20,
+        "sanitization_rate": 0.8
+      }
+    },
+    {
+      "name": "Reliability Assessment",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 1561.0918998718262,
+        "errors": [],
+        "health_score": 1.0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "name": "Scalability Validation",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 2873.844623565674,
+        "errors": [],
+        "scaling_factor": 4.9228874260953495
+      }
+    },
+    {
+      "name": "Error Handling Validation",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 2888.8440132141113,
+        "errors": []
+      }
+    },
+    {
+      "name": "Integration Testing",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "duration_ms": 711.8725776672363,
+        "errors": [],
+        "components_tested": 3
+      }
+    }
+  ],
+  "timestamp": 1755376890.2077775
+}

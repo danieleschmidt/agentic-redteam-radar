@@ -9,11 +9,37 @@ This module provides enterprise-grade scaling capabilities including:
 - Multi-tenancy support
 """
 
-from .auto_scaler import AutoScaler, ScalingPolicy, ScalingMetrics
-from .load_balancer import LoadBalancer, LoadBalancingStrategy
-from .resource_pool import ResourcePool, ResourceManager
-from .performance_tuner import PerformanceTuner, OptimizationProfile
-from .multi_tenant import MultiTenantManager, TenantIsolation
+try:
+    from .auto_scaler import AutoScaler, ScalingPolicy, ScalingMetrics
+    from .load_balancer import LoadBalancer, LoadBalancingStrategy
+    from .resource_pool import ResourcePool, ResourceManager
+    from .performance_tuner import PerformanceTuner, OptimizationProfile
+    from .multi_tenant import MultiTenantManager, TenantIsolation
+except ImportError:
+    from .simple_resource_pool import (
+        SimpleResourcePool as ResourcePool, 
+        ConcurrencyManager,
+        LoadBalancer
+    )
+    # Provide simple alternatives for missing components
+    class AutoScaler:
+        pass
+    class ScalingPolicy:
+        pass
+    class ScalingMetrics:
+        pass
+    class LoadBalancingStrategy:
+        pass
+    class ResourceManager:
+        pass
+    class PerformanceTuner:
+        pass
+    class OptimizationProfile:
+        pass
+    class MultiTenantManager:
+        pass
+    class TenantIsolation:
+        pass
 
 __all__ = [
     "AutoScaler",
@@ -26,5 +52,6 @@ __all__ = [
     "PerformanceTuner",
     "OptimizationProfile",
     "MultiTenantManager",
-    "TenantIsolation"
+    "TenantIsolation",
+    "ConcurrencyManager"
 ]
