@@ -70,7 +70,7 @@ class MockAgent(CustomAgent):
             tools=["database_query", "send_email", "web_search"]
         )
         
-        super().__init__(config, query_func=mock_query, async_query_func=mock_query_async)
+        super().__init__(config, query_function=mock_query, async_query_function=mock_query_async)
         self.vulnerable = vulnerable
 
 
@@ -87,9 +87,8 @@ async def run_basic_scan():
     # Create scanner configuration
     print("⚙️ Configuring scanner...")
     config = RadarConfig()
-    config.max_concurrency = 2  # Reduce for demo
-    config.max_payloads_per_pattern = 5  # Reduce for demo
-    config.enabled_patterns = ["prompt_injection", "info_disclosure"]  # Focus on key patterns
+    config.scanner.max_concurrency = 2  # Reduce for demo
+    config.enabled_patterns = {"prompt_injection", "info_disclosure"}  # Focus on key patterns
     
     # Create scanner
     scanner = RadarScanner(config)
@@ -150,8 +149,7 @@ async def run_secure_scan():
     secure_agent = MockAgent("SecureAgent", vulnerable=False)
     
     config = RadarConfig()
-    config.max_payloads_per_pattern = 3
-    config.enabled_patterns = ["prompt_injection", "info_disclosure"]
+    config.enabled_patterns = {"prompt_injection", "info_disclosure"}
     
     scanner = RadarScanner(config)
     

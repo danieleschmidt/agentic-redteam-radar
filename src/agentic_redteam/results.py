@@ -129,6 +129,9 @@ class ScanResult:
     scanner_version: str = "0.1.0"
     timestamp: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    error_count: int = 0
+    scan_status: str = "completed"
+    status_message: str = ""
     
     @property
     def statistics(self) -> ScanStatistics:
