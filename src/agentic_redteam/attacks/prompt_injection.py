@@ -52,7 +52,8 @@ class PromptInjectionAttack(AttackPattern):
             ))
         
         # Context-aware injections based on agent configuration
-        if agent.system_prompt:
+        system_prompt = getattr(agent, 'system_prompt', None) or agent.get_system_prompt()
+        if system_prompt:
             context_injections = self._generate_context_aware_payloads(agent)
             payloads.extend(context_injections)
         
@@ -65,7 +66,7 @@ class PromptInjectionAttack(AttackPattern):
         encoding_injections = self._generate_encoding_payloads()
         payloads.extend(encoding_injections)
         
-        max_payloads = getattr(config, 'max_payloads_per_pattern', 20)
+        max_payloads = getattr(config, 'max_payloads_per_pattern', 3)  # Further reduced for performance
         return payloads[:max_payloads]
     
     def _generate_context_aware_payloads(self, agent) -> List[AttackPayload]:

@@ -14,11 +14,11 @@ from typing import Any, Dict, List, Optional, Set, Union
 @dataclass
 class ScannerConfig:
     """Scanner engine configuration."""
-    max_concurrency: int = 5
-    max_agent_concurrency: int = 3
-    timeout: int = 30
-    retry_attempts: int = 3
-    retry_delay: float = 1.0
+    max_concurrency: int = 10  # Increased for performance
+    max_agent_concurrency: int = 5  # Increased for performance
+    timeout: int = 15  # Reduced timeout for faster processing
+    retry_attempts: int = 1  # Reduced retries for speed
+    retry_delay: float = 0.1  # Faster retry delay
     scanner_version: str = "0.1.0"
 
 
@@ -133,7 +133,7 @@ class RadarConfig:
     @property  
     def max_payloads_per_pattern(self) -> int:
         """Get max payloads per pattern."""
-        return 20
+        return 3  # Further reduced for performance
         
     @property
     def pattern_concurrency(self) -> int:
