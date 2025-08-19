@@ -1,0 +1,236 @@
+{
+  "quality_gates_summary": {
+    "total_gates": 10,
+    "passed_gates": 9,
+    "failed_gates": 1,
+    "pass_percentage": 90.0,
+    "overall_score": 0.99,
+    "quality_level": "EXCELLENT",
+    "execution_timestamp": 1755605019.4387238
+  },
+  "individual_gates": {
+    "Core Functionality": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.10601377487182617,
+      "error_message": null,
+      "details": {
+        "scanner_initialized": true,
+        "patterns_loaded": 4,
+        "agent_created": true,
+        "scan_completed": true,
+        "vulnerabilities_found": 1,
+        "scan_duration": 0.10473918914794922,
+        "patterns_listed": true,
+        "pattern_names": [
+          "PromptInjectionAttack",
+          "InfoDisclosureAttack",
+          "PolicyBypassAttack",
+          "ChainOfThoughtAttack"
+        ],
+        "health_check": true,
+        "performance_report": true,
+        "agent_validation": true
+      }
+    },
+    "Error Handling": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.10338473320007324,
+      "error_message": null,
+      "details": {
+        "invalid_agent_detected": true,
+        "failing_agent_handled": true,
+        "dangerous_input_detected": true,
+        "large_input_handled": true,
+        "health_monitoring": true
+      }
+    },
+    "Performance Benchmarks": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.31307554244995117,
+      "error_message": null,
+      "details": {
+        "single_scan_duration": 0.10308623313903809,
+        "single_scan_under_200ms": true,
+        "multi_scan_duration": 0.209273099899292,
+        "multi_scan_efficiency": 0.06975769996643066,
+        "multi_scan_success": true,
+        "cache_hit_duration": 0.0001266002655029297,
+        "cache_performance_improvement": true,
+        "performance_class": "good",
+        "performance_insights_available": true,
+        "optimization_available": true
+      }
+    },
+    "Security Validation": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.20634722709655762,
+      "error_message": null,
+      "details": {
+        "secure_agent_scanned": true,
+        "secure_agent_vulnerabilities": 1,
+        "vulnerable_agent_scanned": true,
+        "vulnerable_agent_vulnerabilities": 1,
+        "vulnerability_detection_working": true,
+        "attack_patterns_loaded": 4,
+        "has_prompt_injection": true,
+        "has_info_disclosure": true,
+        "vulnerability_has_severity": true,
+        "vulnerability_has_description": true,
+        "vulnerability_has_remediation": true,
+        "security_input_validation": true
+      }
+    },
+    "Concurrency & Scaling": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.31395697593688965,
+      "error_message": null,
+      "details": {
+        "initial_adaptive_concurrency": 2,
+        "concurrent_scan_count": 5,
+        "concurrent_scan_duration": 0.3134939670562744,
+        "concurrent_scan_success": true,
+        "concurrency_efficiency": 0.06269879341125488,
+        "adaptive_concurrency_updated": 2,
+        "performance_tracking": true,
+        "cache_size_after_concurrent": 5,
+        "cache_working_concurrent": true,
+        "health_status_under_load": "healthy",
+        "scanner_healthy_under_load": true
+      }
+    },
+    "Input Validation": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.0003590583801269531,
+      "error_message": null,
+      "details": {
+        "normal_input_handled": true,
+        "normal_input_preserved": true,
+        "large_input_detected": true,
+        "malicious_patterns_tested": 5,
+        "malicious_patterns_detected": 5,
+        "malicious_detection_rate": 1.0,
+        "string_handling": true,
+        "dict_handling": true,
+        "list_handling": true,
+        "number_handling": true,
+        "boolean_handling": true,
+        "data_types_handled": 5,
+        "context_aware_validation": true
+      }
+    },
+    "Cache Optimization": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.41318559646606445,
+      "error_message": null,
+      "details": {
+        "initial_cache_size": 0,
+        "cache_size_after_first_scan": 1,
+        "cache_populated": true,
+        "cache_hit_duration": 0.00010132789611816406,
+        "cache_hit_faster": true,
+        "cache_hit_same_result": true,
+        "cache_stats_available": true,
+        "optimization_report": {
+          "timestamp": 1755605017.5729144,
+          "optimizations_applied": [],
+          "current_cache_size": 1,
+          "current_cache_ttl": 300,
+          "adaptive_concurrency": 2,
+          "performance_history_size": 1
+        },
+        "cache_optimizations_available": true,
+        "cache_size_with_multiple": 4,
+        "cache_handles_multiple": true,
+        "cache_efficiency": 0.8,
+        "cache_insights_available": true
+      }
+    },
+    "Multi-Agent Processing": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 0.31604719161987305,
+      "error_message": null,
+      "details": {
+        "multi_agent_no_scale_count": 3,
+        "multi_agent_no_scale_duration": 0.20876836776733398,
+        "multi_agent_no_scale_success": true,
+        "multi_agent_with_scale_count": 5,
+        "multi_agent_with_scale_duration": 0.10669803619384766,
+        "multi_agent_with_scale_success": true,
+        "all_results_valid": true,
+        "scaling_efficiency": 3.2610467073646703,
+        "scaling_improved_performance": true,
+        "adaptive_concurrency_initial": 2,
+        "adaptive_concurrency_current": 2,
+        "performance_insights_available": true,
+        "avg_scan_duration": 0.10457782745361328,
+        "max_scan_duration": 0.10563039779663086,
+        "min_scan_duration": 0.10269951820373535,
+        "load_balance_variance": 0.02802582214853845,
+        "multi_agent_error_handling": true
+      }
+    },
+    "Attack Pattern Coverage": {
+      "passed": false,
+      "score": 0.8999999999999999,
+      "execution_time": 0.10387754440307617,
+      "error_message": "'SimpleRadarScanner' object has no attribute 'get_pattern_info'",
+      "details": {
+        "patterns_loaded": 4,
+        "pattern_names": [
+          "PromptInjectionAttack",
+          "InfoDisclosureAttack",
+          "PolicyBypassAttack",
+          "ChainOfThoughtAttack"
+        ],
+        "has_prompt_injection": true,
+        "has_info_disclosure": true,
+        "has_policy_bypass": true,
+        "has_chain_of_thought": true,
+        "pattern_coverage_score": 1.0,
+        "vulnerabilities_found": 1,
+        "patterns_executed": 4,
+        "total_tests": 12,
+        "patterns_properly_configured": true,
+        "custom_pattern_registration": true
+      }
+    },
+    "Robustness & Reliability": {
+      "passed": true,
+      "score": 1.0,
+      "execution_time": 1.1361310482025146,
+      "error_message": null,
+      "details": {
+        "health_monitoring_available": true,
+        "health_status": "healthy",
+        "scan_count_tracking": true,
+        "initial_scan_count": 0,
+        "final_scan_count": 2,
+        "performance_tracking": true,
+        "success_rate_tracking": true,
+        "error_rate_tracking": true,
+        "error_tracking": true,
+        "failed_scan_tracking": true,
+        "performance_insights": true,
+        "optimization_available": true,
+        "cache_stress_test": true,
+        "cache_size_under_stress": 11
+      }
+    }
+  },
+  "recommendations": [
+    "\u274c Fix Attack Pattern Coverage: 'SimpleRadarScanner' object has no attribute 'get_pattern_info'"
+  ],
+  "compliance": {
+    "sdlc_requirements_met": true,
+    "coverage_requirement": true,
+    "production_ready": true
+  }
+}

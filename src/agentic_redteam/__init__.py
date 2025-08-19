@@ -13,7 +13,7 @@ try:
     from .scanner import RadarScanner
 except ImportError:
     from .simple_scanner import SimpleRadarScanner as RadarScanner
-from .agent import Agent, create_agent, AgentType, create_mock_agent
+from .agent import Agent, create_agent, AgentType, AgentConfig, create_mock_agent
 try:
     from .config_simple import RadarConfig
 except ImportError:
@@ -26,6 +26,7 @@ __all__ = [
     "create_agent",
     "create_mock_agent",
     "AgentType",
+    "AgentConfig",
     "RadarConfig",
     "ScanResult",
     "Vulnerability",
