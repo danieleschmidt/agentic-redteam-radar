@@ -127,8 +127,8 @@ def create_app(config: Optional[RadarConfig] = None) -> FastAPI:
         @app.get("/metrics", tags=["Monitoring"])
         async def metrics():
             """Prometheus metrics endpoint."""
-            # TODO: Implement Prometheus metrics
-            return {"message": "Metrics endpoint - implementation pending"}
+            from ..monitoring.telemetry import get_prometheus_metrics
+            return get_prometheus_metrics()
     
     return app
 

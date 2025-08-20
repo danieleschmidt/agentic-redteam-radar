@@ -17,6 +17,17 @@ from .attacks.chain_of_thought import ChainOfThoughtAttack
 from .results import ScanResult, Vulnerability, AttackResult
 from .config_simple import RadarConfig
 from .utils.simple_logger import setup_logger
+try:
+    from .security.input_sanitizer import EnhancedInputSanitizer, ThreatLevel
+    _ENHANCED_SECURITY = True
+except ImportError:
+    _ENHANCED_SECURITY = False
+    
+try:
+    from .reliability.circuit_breaker import CircuitBreaker, CircuitConfig, get_circuit_manager
+    _CIRCUIT_BREAKER = True
+except ImportError:
+    _CIRCUIT_BREAKER = False
 
 
 @dataclass
@@ -75,6 +86,28 @@ class SimpleRadarScanner:
         self.adaptive_concurrency = 2  # Dynamic concurrency adjustment
         self.max_cache_size = 100
         self.cache_ttl = 300  # 5 minutes
+        
+        # Generation 2: Enhanced security and reliability
+        if _ENHANCED_SECURITY:
+            self.input_sanitizer = EnhancedInputSanitizer()
+        else:
+            self.input_sanitizer = None
+            
+        if _CIRCUIT_BREAKER:
+            self.circuit_manager = get_circuit_manager()
+            # Create circuit breaker for agent queries
+            self.agent_circuit = self.circuit_manager.create_circuit(
+                "agent_queries",
+                CircuitConfig(
+                    failure_threshold=3,
+                    recovery_timeout=30.0,
+                    success_threshold=2,
+                    timeout=10.0
+                )
+            )
+        else:
+            self.circuit_manager = None
+            self.agent_circuit = None
         
         self._load_default_patterns()
         
@@ -316,21 +349,21 @@ class SimpleRadarScanner:
             errors.append("Agent must implement query() method")
         
         try:
-            # Test basic connectivity with retry logic
-            for attempt in range(3):  # Retry up to 3 times
-                try:
-                    test_response = agent.query("Hello", timeout=5)
-                    if not test_response:
-                        if attempt == 2:  # Last attempt
-                            errors.append("Agent query() returned empty response after retries")
-                    else:
-                        break  # Success
-                except Exception as e:
-                    if attempt == 2:  # Last attempt
-                        errors.append(f"Agent query() failed after retries: {e}")
-                    else:
-                        time.sleep(0.1)  # Brief delay before retry
-                        continue
+            # Test basic connectivity with circuit breaker protection
+            def test_agent():
+                return agent.query("Hello", timeout=5)
+            
+            try:
+                if self.agent_circuit and _CIRCUIT_BREAKER:
+                    test_response = self.agent_circuit.call(test_agent)
+                else:
+                    test_response = test_agent()
+                    
+                if not test_response:
+                    errors.append("Agent query() returned empty response")
+            except Exception as e:
+                errors.append(f"Agent query() failed: {e}")
+                
         except Exception as e:
             errors.append(f"Agent validation error: {e}")
         
@@ -355,7 +388,7 @@ class SimpleRadarScanner:
     
     def validate_input(self, input_data: Any, context: str = "general") -> Tuple[Any, List[str]]:
         """
-        Validate and sanitize input data.
+        Enhanced input validation with comprehensive threat detection.
         
         Args:
             input_data: Data to validate
@@ -366,39 +399,59 @@ class SimpleRadarScanner:
         """
         warnings = []
         
-        if input_data is None:
-            warnings.append("Null input detected")
-            return "", warnings
-        
-        if isinstance(input_data, str):
-            # Check for suspicious patterns
-            suspicious_patterns = [
-                ("<script", "Potential XSS attempt"),
-                ("javascript:", "JavaScript injection attempt"),
-                ("SELECT", "Potential SQL injection"),
-                ("DROP", "Dangerous SQL command"),
-                ("../", "Directory traversal attempt"),
-                ("eval(", "Code execution attempt"),
-            ]
+        if self.input_sanitizer and _ENHANCED_SECURITY:
+            # Use enhanced sanitizer for comprehensive validation
+            sanitization_result = self.input_sanitizer.sanitize(input_data, context)
+            warnings = sanitization_result.warnings.copy()
             
-            input_lower = input_data.lower()
-            for pattern, warning in suspicious_patterns:
-                if pattern.lower() in input_lower:
-                    warnings.append(warning)
+            # Add threat detection warnings
+            if sanitization_result.threats_detected:
+                threat_summary = f"Security threats detected: {len(sanitization_result.threats_detected)} ({sanitization_result.threat_level.value} level)"
+                warnings.append(threat_summary)
             
-            # Check length
-            if len(input_data) > 10000:
-                warnings.append("Input exceeds maximum length")
-                input_data = input_data[:10000] + "..."
+            # Log security events
+            if sanitization_result.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
+                self.logger.warning(
+                    f"High-risk input detected in context '{context}': "
+                    f"{len(sanitization_result.threats_detected)} threats, "
+                    f"level: {sanitization_result.threat_level.value}"
+                )
+                
+                # Log individual threats for audit
+                for threat in sanitization_result.threats_detected:
+                    self.logger.warning(f"Threat: {threat['description']} (pattern: {threat['pattern']})")
             
-            return input_data, warnings
-        
-        elif isinstance(input_data, dict):
-            warnings.append("Dictionary input converted to string")
-            return str(input_data), warnings
-        
+            # Return sanitized data and warnings
+            return sanitization_result.sanitized_input, warnings
         else:
-            warnings.append(f"Unexpected input type: {type(input_data)}")
+            # Fallback to basic validation
+            if input_data is None:
+                warnings.append("Null input detected")
+                return "", warnings
+            
+            if isinstance(input_data, str):
+                # Check for suspicious patterns
+                suspicious_patterns = [
+                    ("<script", "Potential XSS attempt"),
+                    ("javascript:", "JavaScript injection attempt"),
+                    ("SELECT", "Potential SQL injection"),
+                    ("DROP", "Dangerous SQL command"),
+                    ("../", "Directory traversal attempt"),
+                    ("eval(", "Code execution attempt"),
+                ]
+                
+                input_lower = input_data.lower()
+                for pattern, warning in suspicious_patterns:
+                    if pattern.lower() in input_lower:
+                        warnings.append(warning)
+                
+                # Check length
+                if len(input_data) > 10000:
+                    warnings.append("Input exceeds maximum length")
+                    input_data = input_data[:10000] + "..."
+                
+                return input_data, warnings
+            
             return str(input_data), warnings
     
     async def scan_multiple(self, agents: List[Agent], auto_scale: bool = True) -> Dict[str, ScanResult]:
