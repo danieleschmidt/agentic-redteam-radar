@@ -265,10 +265,10 @@ def save_results(result: ScanResult, output_path: str, format_type: str):
         with open(output_file, 'w') as f:
             yaml.dump(result.to_dict(), f, default_flow_style=False)
     elif format_type == 'html':
-        # TODO: Implement HTML report generation
-        console.print("[yellow]HTML format not yet implemented, saving as JSON[/yellow]")
-        with open(output_file.with_suffix('.json'), 'w') as f:
-            f.write(result.to_json())
+        from ..reporting.html_generator import generate_html_report
+        html_content = generate_html_report(result)
+        with open(output_file, 'w') as f:
+            f.write(html_content)
 
 
 def should_fail_on_severity(result: ScanResult, fail_severity: str) -> bool:
