@@ -385,7 +385,8 @@ class CircuitBreakerManager:
         """Create and register a new circuit breaker."""
         with self._lock:
             if name in self._circuits:
-                raise ValueError(f"Circuit breaker '{name}' already exists")
+                self.logger.debug(f"Circuit breaker '{name}' already exists, returning existing instance")
+                return self._circuits[name]
             
             circuit = CircuitBreaker(name, config)
             self._circuits[name] = circuit

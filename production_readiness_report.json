@@ -12,32 +12,32 @@
   "deployment_recommendation": "\u2705 READY FOR PRODUCTION: Minor optimizations recommended",
   "detailed_results": {
     "infrastructure": {
-      "duration_ms": 0.8261203765869141,
+      "duration_ms": 0.44918060302734375,
       "health_score": 1.0,
       "worker_pool_capacity": 15,
       "regions_validated": 4,
       "status": "ready"
     },
     "global_deployment": {
-      "duration_ms": 970.2591896057129,
+      "duration_ms": 973.1113910675049,
       "regions_deployed": 4,
       "global_success_rate": 1.0,
-      "global_throughput": 52.095012063331716,
+      "global_throughput": 51.84527067742749,
       "languages_supported": 6,
       "load_balance_efficiency": 2.5,
       "status": "deployed"
     },
     "performance": {
-      "duration_ms": 2301.4488220214844,
-      "sustained_throughput": 86.62438062067632,
-      "burst_throughput": 58.13647164361405,
-      "response_time_p95": 122.98274040222168,
+      "duration_ms": 2317.4707889556885,
+      "sustained_throughput": 85.71818622510081,
+      "burst_throughput": 57.80496524373487,
+      "response_time_p95": 130.68079948425293,
       "health_under_load": 1.0,
       "total_scans_tested": 150,
       "status": "validated"
     },
     "security": {
-      "duration_ms": 107.39493370056152,
+      "duration_ms": 107.74016380310059,
       "vulnerability_detection_count": 1,
       "sanitization_rate": 0.375,
       "security_patterns_tested": 12,
@@ -45,23 +45,23 @@
       "status": "hardened"
     },
     "monitoring": {
-      "duration_ms": 121.84524536132812,
+      "duration_ms": 121.59919738769531,
       "health_checks_passing": 3,
       "metrics_collected": 5,
       "observability_components": 12,
-      "avg_scan_time_ms": 12.131977081298828,
+      "avg_scan_time_ms": 12.112784385681152,
       "status": "monitoring"
     },
     "disaster_recovery": {
-      "duration_ms": 525.0625610351562,
+      "duration_ms": 525.8145332336426,
       "degraded_mode_success_rate": 1.0,
       "failover_successful": true,
-      "recovery_time_seconds": 0.42101573944091797,
+      "recovery_time_seconds": 0.42182493209838867,
       "rto_compliant": true,
       "status": "tested"
     },
     "compliance": {
-      "duration_ms": 0.017404556274414062,
+      "duration_ms": 0.017642974853515625,
       "gdpr_compliant": true,
       "soc2_compliant": true,
       "iso27001_compliant": true,
@@ -73,10 +73,10 @@
   "production_metrics": {
     "global_regions": 4,
     "languages_supported": 6,
-    "peak_throughput": 58.13647164361405,
-    "response_time_p95": 122.98274040222168,
+    "peak_throughput": 57.80496524373487,
+    "response_time_p95": 130.68079948425293,
     "security_detection_rate": 0.375,
-    "disaster_recovery_rto": 0.42101573944091797
+    "disaster_recovery_rto": 0.42182493209838867
   },
   "deployment_checklist": {
     "infrastructure_validated": true,
@@ -92,5 +92,5 @@
     "backup_procedures_tested": true,
     "incident_response_ready": true
   },
-  "timestamp": 1755605216.3295429
+  "timestamp": 1755777955.2489116
 }
