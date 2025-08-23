@@ -300,3 +300,62 @@ def get_prometheus_metrics() -> Dict[str, Any]:
         'summary': collector.get_metrics_summary(),
         'format': 'prometheus'
     }
+
+
+# Aliases for scanner compatibility
+def get_metrics_collector() -> TelemetryCollector:
+    """Get metrics collector instance (alias for get_telemetry_collector)."""
+    return get_telemetry_collector()
+
+
+class PerformanceMonitor:
+    """Performance monitoring wrapper for compatibility."""
+    
+    def __init__(self):
+        """Initialize performance monitor."""
+        self.logger = setup_logger("agentic_redteam.performance_monitor")
+        self.collector = get_telemetry_collector()
+        self._alert_handlers = []
+    
+    def get_health_status(self) -> Dict[str, Any]:
+        """Get health status."""
+        return {
+            'status': 'healthy',
+            'timestamp': time.time(),
+            'metrics_active': True
+        }
+    
+    def add_alert_handler(self, handler):
+        """Add alert handler."""
+        self._alert_handlers.append(handler)
+    
+    def check_performance_thresholds(self, metrics: Dict[str, Any]) -> None:
+        """Check performance thresholds and trigger alerts."""
+        # Simple threshold checking
+        if metrics.get('avg_scan_duration_seconds', 0) > 10.0:
+            for handler in self._alert_handlers:
+                try:
+                    handler('performance_degradation', {
+                        'metric': 'avg_scan_duration',
+                        'value': metrics['avg_scan_duration_seconds'],
+                        'threshold': 10.0
+                    })
+                except Exception as e:
+                    self.logger.error(f"Alert handler error: {e}")
+
+
+# Global performance monitor instance
+_performance_monitor = None
+_monitor_lock = Lock()
+
+
+def get_performance_monitor() -> PerformanceMonitor:
+    """Get or create global performance monitor instance."""
+    global _performance_monitor
+    
+    if _performance_monitor is None:
+        with _monitor_lock:
+            if _performance_monitor is None:
+                _performance_monitor = PerformanceMonitor()
+    
+    return _performance_monitor
