@@ -96,8 +96,8 @@ class RadarScanner:
         self.degradation_manager = DegradationManager()
         
         # Generation 3: Advanced scaling and optimization components
-        self.auto_scaler = AutoScaler()
         self.load_balancer = LoadBalancer(LoadBalancingStrategy.ADAPTIVE)
+        self.auto_scaler = AutoScaler(self.load_balancer)
         self.resource_manager = ResourceManager()
         self.performance_tuner = PerformanceTuner()
         self.multi_tenant_manager = MultiTenantManager()

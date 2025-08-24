@@ -62,6 +62,33 @@ class ScalingEvent:
 
 
 @dataclass
+class ScalingMetrics:
+    """Scaling metrics for auto-scaler decisions."""
+    cpu_percent: float = 0.0
+    memory_percent: float = 0.0
+    queue_length: int = 0
+    active_scans: int = 0
+    pending_scans: int = 0
+    throughput: float = 0.0
+    error_rate: float = 0.0
+    response_time_ms: float = 0.0
+
+
+@dataclass
+class ScalingPolicy:
+    """Scaling policy configuration."""
+    name: str
+    trigger: ScalingTrigger
+    scale_up_threshold: float
+    scale_down_threshold: float
+    cooldown_period: float = 300.0
+    min_instances: int = 1
+    max_instances: int = 10
+    scale_up_increment: int = 1
+    scale_down_increment: int = 1
+
+
+@dataclass
 class AutoScalerConfig:
     """Auto-scaler configuration."""
     min_instances: int = 1
