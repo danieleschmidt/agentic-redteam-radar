@@ -1,0 +1,231 @@
+{
+  "overall_status": "STAGING_READY",
+  "status_emoji": "\u2705",
+  "overall_score": 88.88888888888889,
+  "gates_passed": 8,
+  "gates_total": 9,
+  "critical_gates": {
+    "passed": 5,
+    "total": 6,
+    "success_rate": 83.33333333333334
+  },
+  "important_gates": {
+    "passed": 1,
+    "total": 1,
+    "success_rate": 100.0
+  },
+  "optional_gates": {
+    "passed": 2,
+    "total": 2,
+    "success_rate": 100.0
+  },
+  "execution_time": 1.8408210277557373,
+  "gate_details": {
+    "test_coverage": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.36939477920532227,
+      "required": true,
+      "details": {
+        "passed_tests": 8,
+        "total_tests": 8,
+        "coverage_percentage": "100.0%",
+        "test_results": {
+          "scanner_initialization": true,
+          "agent_creation": true,
+          "basic_scanning": true,
+          "multi_agent_scanning": true,
+          "error_handling": true,
+          "caching_system": true,
+          "health_monitoring": true,
+          "performance_optimization": true
+        },
+        "requirement": "85%"
+      }
+    },
+    "security_scanning": {
+      "status": "failed",
+      "score": 37.5,
+      "duration": 0.0003974437713623047,
+      "required": true,
+      "details": {
+        "passed_checks": 3,
+        "total_checks": 8,
+        "security_score": "37.5%",
+        "security_checks": {
+          "input_validation": false,
+          "xss_protection": false,
+          "sql_injection_prevention": false,
+          "path_traversal_protection": false,
+          "code_injection_prevention": false,
+          "sensitive_data_exposure": true,
+          "authentication_security": true,
+          "authorization_controls": true
+        },
+        "requirement": "90%"
+      }
+    },
+    "performance_benchmarks": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.5241038799285889,
+      "required": true,
+      "details": {
+        "performance_score": "100.0%",
+        "passed_requirements": 5,
+        "total_requirements": 5,
+        "evaluation": {
+          "single_scan_time": {
+            "required": "<= 2.0",
+            "actual": "0.10",
+            "passed": true
+          },
+          "multi_scan_throughput": {
+            "required": ">= 5.0",
+            "actual": "19.02",
+            "passed": true
+          },
+          "cache_hit_speedup": {
+            "required": ">= 10.0",
+            "actual": "968.22",
+            "passed": true
+          },
+          "memory_efficiency": {
+            "required": "<= 100.0",
+            "actual": "50.00",
+            "passed": true
+          },
+          "concurrent_capacity": {
+            "required": ">= 5",
+            "actual": "8.00",
+            "passed": true
+          }
+        },
+        "raw_results": {
+          "single_scan_time": 0.10295486450195312,
+          "cache_hit_speedup": 968.2152466367713,
+          "multi_scan_throughput": 19.0237064737825,
+          "memory_efficiency": 50.0,
+          "concurrent_capacity": 8
+        }
+      }
+    },
+    "functional_testing": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.4198610782623291,
+      "required": true,
+      "details": {
+        "functional_score": "100.0%",
+        "passed_tests": 5,
+        "total_tests": 5,
+        "test_results": {
+          "basic_functionality": true,
+          "robustness_features": true,
+          "scaling_capabilities": true,
+          "error_recovery": true,
+          "integration_points": true
+        },
+        "requirement": "90%"
+      }
+    },
+    "integration_testing": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.52034592628479,
+      "required": true,
+      "details": {
+        "integration_score": "100.0%",
+        "passed_tests": 5,
+        "total_tests": 5,
+        "test_results": {
+          "scanner_agent_integration": true,
+          "attack_pattern_integration": true,
+          "caching_persistence_integration": true,
+          "monitoring_health_integration": true,
+          "multi_component_workflow": true
+        },
+        "requirement": "85%"
+      }
+    },
+    "code_quality": {
+      "status": "passed",
+      "score": 85.0,
+      "duration": 0.004355907440185547,
+      "required": false,
+      "details": {
+        "overall_score": "85.0%",
+        "quality_metrics": {
+          "code_organization": 85,
+          "error_handling": 70.0,
+          "documentation": 100.0,
+          "modularity": 100.0,
+          "best_practices": 70.0
+        },
+        "requirement": "75%"
+      }
+    },
+    "documentation_coverage": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.00015735626220703125,
+      "required": false,
+      "details": {
+        "documentation_score": "100.0%",
+        "covered_elements": 6,
+        "total_elements": 6,
+        "documentation_elements": {
+          "readme_present": true,
+          "api_documentation": true,
+          "setup_instructions": true,
+          "usage_examples": true,
+          "architecture_docs": true,
+          "deployment_guide": true
+        },
+        "requirement": "80%"
+      }
+    },
+    "production_readiness": {
+      "status": "passed",
+      "score": 87.5,
+      "duration": 0.0006260871887207031,
+      "required": true,
+      "details": {
+        "readiness_score": "87.5%",
+        "passed_checks": 7,
+        "total_checks": 8,
+        "readiness_checks": {
+          "configuration_management": true,
+          "logging_and_monitoring": true,
+          "error_handling_robustness": false,
+          "scalability_features": true,
+          "security_hardening": true,
+          "deployment_automation": true,
+          "health_checks": true,
+          "resource_management": true
+        },
+        "requirement": "85%"
+      }
+    },
+    "compliance_validation": {
+      "status": "passed",
+      "score": 100.0,
+      "duration": 0.0006062984466552734,
+      "required": true,
+      "details": {
+        "compliance_score": "100.0%",
+        "passed_checks": 6,
+        "total_checks": 6,
+        "compliance_checks": {
+          "security_standards": true,
+          "data_protection": true,
+          "audit_logging": true,
+          "access_controls": true,
+          "encryption_standards": true,
+          "vulnerability_management": true
+        },
+        "requirement": "90%"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "scenario": "Single Agent",
+    "agent_count": 1,
+    "duration": 0.10269403457641602,
+    "successful": 1,
+    "throughput": 9.737663965825458,
+    "vulnerabilities": 1
+  },
+  {
+    "scenario": "Small Load",
+    "agent_count": 5,
+    "duration": 0.3124697208404541,
+    "successful": 5,
+    "throughput": 16.001550443196326,
+    "vulnerabilities": 5
+  },
+  {
+    "scenario": "Medium Load",
+    "agent_count": 10,
+    "duration": 0.5282235145568848,
+    "successful": 10,
+    "throughput": 18.93137985041954,
+    "vulnerabilities": 10
+  },
+  {
+    "scenario": "High Load",
+    "agent_count": 20,
+    "duration": 1.0483381748199463,
+    "successful": 20,
+    "throughput": 19.077813324345488,
+    "vulnerabilities": 20
+  }
+]
