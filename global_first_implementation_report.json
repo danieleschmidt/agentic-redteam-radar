@@ -1,0 +1,234 @@
+{
+  "internationalization": {
+    "average_score": 0.0,
+    "locale_scores": {
+      "en": 0.0,
+      "es": 0.0,
+      "fr": 0.0,
+      "de": 0.0,
+      "ja": 0.0,
+      "zh": 0.0
+    },
+    "supported_locales": [
+      "en",
+      "es",
+      "fr",
+      "de",
+      "ja",
+      "zh"
+    ],
+    "current_locale": "en"
+  },
+  "compliance": {
+    "average_score": 100.0,
+    "compliant_regulations": 5,
+    "total_regulations": 5,
+    "regulation_results": {
+      "GDPR": {
+        "compliant": true,
+        "score": 100.0,
+        "details": {
+          "regulation": "General Data Protection Regulation",
+          "region": "EU",
+          "score": 100.0,
+          "met_requirements": 7,
+          "total_requirements": 7,
+          "requirement_details": {
+            "data_minimization": {
+              "met": true,
+              "description": "Collect and process only necessary data"
+            },
+            "consent_management": {
+              "met": true,
+              "description": "Obtain and manage user consent appropriately"
+            },
+            "right_to_erasure": {
+              "met": true,
+              "description": "Provide ability to delete user data"
+            },
+            "data_portability": {
+              "met": true,
+              "description": "Allow users to export their data"
+            },
+            "privacy_by_design": {
+              "met": true,
+              "description": "Build privacy protections into system design"
+            },
+            "breach_notification": {
+              "met": true,
+              "description": "Report security breaches within required timeframes"
+            },
+            "audit_logging": {
+              "met": true,
+              "description": "Maintain comprehensive audit logs"
+            }
+          }
+        }
+      },
+      "CCPA": {
+        "compliant": true,
+        "score": 100.0,
+        "details": {
+          "regulation": "California Consumer Privacy Act",
+          "region": "US-CA",
+          "score": 100.0,
+          "met_requirements": 6,
+          "total_requirements": 6,
+          "requirement_details": {
+            "data_disclosure": {
+              "met": true,
+              "description": "Disclose data collection and usage practices"
+            },
+            "opt_out_rights": {
+              "met": true,
+              "description": "Provide users ability to opt-out of data processing"
+            },
+            "data_deletion": {
+              "met": true,
+              "description": "Data Deletion"
+            },
+            "non_discrimination": {
+              "met": true,
+              "description": "Do not discriminate against users exercising rights"
+            },
+            "privacy_policy": {
+              "met": true,
+              "description": "Maintain clear and accessible privacy policy"
+            },
+            "consumer_requests": {
+              "met": true,
+              "description": "Handle consumer privacy requests appropriately"
+            }
+          }
+        }
+      },
+      "PDPA": {
+        "compliant": true,
+        "score": 100.0,
+        "details": {
+          "regulation": "Personal Data Protection Act",
+          "region": "APAC",
+          "score": 100.0,
+          "met_requirements": 5,
+          "total_requirements": 5,
+          "requirement_details": {
+            "consent_based_processing": {
+              "met": true,
+              "description": "Consent Based Processing"
+            },
+            "data_protection_notice": {
+              "met": true,
+              "description": "Data Protection Notice"
+            },
+            "access_requests": {
+              "met": true,
+              "description": "Access Requests"
+            },
+            "correction_rights": {
+              "met": true,
+              "description": "Correction Rights"
+            },
+            "data_breach_notification": {
+              "met": true,
+              "description": "Data Breach Notification"
+            }
+          }
+        }
+      },
+      "PIPEDA": {
+        "compliant": true,
+        "score": 100.0,
+        "details": {
+          "regulation": "Personal Information Protection and Electronic Documents Act",
+          "region": "CA",
+          "score": 100.0,
+          "met_requirements": 5,
+          "total_requirements": 5,
+          "requirement_details": {
+            "fair_information_principles": {
+              "met": true,
+              "description": "Fair Information Principles"
+            },
+            "consent_for_collection": {
+              "met": true,
+              "description": "Consent For Collection"
+            },
+            "limited_use_disclosure": {
+              "met": true,
+              "description": "Limited Use Disclosure"
+            },
+            "accuracy_maintenance": {
+              "met": true,
+              "description": "Accuracy Maintenance"
+            },
+            "safeguarding_requirements": {
+              "met": true,
+              "description": "Safeguarding Requirements"
+            }
+          }
+        }
+      },
+      "DPA_UK": {
+        "compliant": true,
+        "score": 100.0,
+        "details": {
+          "regulation": "Data Protection Act 2018 (UK)",
+          "region": "UK",
+          "score": 100.0,
+          "met_requirements": 4,
+          "total_requirements": 4,
+          "requirement_details": {
+            "lawful_basis_processing": {
+              "met": true,
+              "description": "Lawful Basis Processing"
+            },
+            "data_subject_rights": {
+              "met": true,
+              "description": "Data Subject Rights"
+            },
+            "accountability_principle": {
+              "met": true,
+              "description": "Demonstrate compliance and responsibility"
+            },
+            "data_protection_impact_assessment": {
+              "met": true,
+              "description": "Data Protection Impact Assessment"
+            }
+          }
+        }
+      }
+    }
+  },
+  "cross_platform": {
+    "compatible": true,
+    "score": 100.0,
+    "platform_info": {
+      "platform": "linux",
+      "architecture": "x86_64",
+      "python_version": "3.12.3",
+      "is_compatible": true,
+      "issues": [],
+      "recommendations": [
+        "Install kubectl for Kubernetes deployments"
+      ],
+      "python_compatible": true,
+      "platform_supported": true,
+      "container_support": true,
+      "kubernetes_ready": true,
+      "docker_available": true,
+      "docker_version": "Docker version 28.3.3, build 980b856",
+      "kubectl_available": false
+    }
+  },
+  "overall_score": 76.66666666666667,
+  "readiness_level": "REGIONAL_READY",
+  "deployment_score": 100.0,
+  "accessibility_score": 83.33333333333334,
+  "category_scores": {
+    "internationalization": 0.0,
+    "compliance": 100.0,
+    "cross_platform": 100.0,
+    "deployment": 100.0,
+    "accessibility": 83.33333333333334
+  }
+}
