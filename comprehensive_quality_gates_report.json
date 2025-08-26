@@ -19,12 +19,12 @@
     "total": 2,
     "success_rate": 100.0
   },
-  "execution_time": 1.8408210277557373,
+  "execution_time": 1.8308629989624023,
   "gate_details": {
     "test_coverage": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.36939477920532227,
+      "duration": 0.36167287826538086,
       "required": true,
       "details": {
         "passed_tests": 8,
@@ -46,7 +46,7 @@
     "security_scanning": {
       "status": "failed",
       "score": 37.5,
-      "duration": 0.0003974437713623047,
+      "duration": 0.0003483295440673828,
       "required": true,
       "details": {
         "passed_checks": 3,
@@ -68,7 +68,7 @@
     "performance_benchmarks": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.5241038799285889,
+      "duration": 0.5218667984008789,
       "required": true,
       "details": {
         "performance_score": "100.0%",
@@ -82,12 +82,12 @@
           },
           "multi_scan_throughput": {
             "required": ">= 5.0",
-            "actual": "19.02",
+            "actual": "19.12",
             "passed": true
           },
           "cache_hit_speedup": {
             "required": ">= 10.0",
-            "actual": "968.22",
+            "actual": "703.58",
             "passed": true
           },
           "memory_efficiency": {
@@ -102,9 +102,9 @@
           }
         },
         "raw_results": {
-          "single_scan_time": 0.10295486450195312,
-          "cache_hit_speedup": 968.2152466367713,
-          "multi_scan_throughput": 19.0237064737825,
+          "single_scan_time": 0.1028289794921875,
+          "cache_hit_speedup": 703.5823817292006,
+          "multi_scan_throughput": 19.122679579846732,
           "memory_efficiency": 50.0,
           "concurrent_capacity": 8
         }
@@ -113,7 +113,7 @@
     "functional_testing": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.4198610782623291,
+      "duration": 0.4233212471008301,
       "required": true,
       "details": {
         "functional_score": "100.0%",
@@ -132,7 +132,7 @@
     "integration_testing": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.52034592628479,
+      "duration": 0.517937421798706,
       "required": true,
       "details": {
         "integration_score": "100.0%",
@@ -151,7 +151,7 @@
     "code_quality": {
       "status": "passed",
       "score": 85.0,
-      "duration": 0.004355907440185547,
+      "duration": 0.0037021636962890625,
       "required": false,
       "details": {
         "overall_score": "85.0%",
@@ -168,7 +168,7 @@
     "documentation_coverage": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.00015735626220703125,
+      "duration": 0.00015497207641601562,
       "required": false,
       "details": {
         "documentation_score": "100.0%",
@@ -188,7 +188,7 @@
     "production_readiness": {
       "status": "passed",
       "score": 87.5,
-      "duration": 0.0006260871887207031,
+      "duration": 0.0005109310150146484,
       "required": true,
       "details": {
         "readiness_score": "87.5%",
@@ -210,7 +210,7 @@
     "compliance_validation": {
       "status": "passed",
       "score": 100.0,
-      "duration": 0.0006062984466552734,
+      "duration": 0.0006222724914550781,
       "required": true,
       "details": {
         "compliance_score": "100.0%",
