@@ -1,462 +1,208 @@
-# Agentic RedTeam Radar
+# 🎯 Agentic RedTeam Radar
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Security](https://img.shields.io/badge/Security-Red%20Team-red.svg)](https://github.com/yourusername/agentic-redteam-radar)
-[![CSA](https://img.shields.io/badge/CSA-Compliant-green.svg)](https://cloudsecurityalliance.org/)
+Automated adversarial scanner for LLM and agent applications. Runs a structured battery of red-team probes against any OpenAI-compatible, Ollama, or custom HTTP endpoint — no heavyweight frameworks needed.
 
-Open-source implementation of an agent-centric red-teaming scanner inspired by Cloud Security Alliance guidance. Automated security testing for AI agents and LLM applications.
+## What It Does
 
-## 🎯 Overview
+- **25 adversarial probes** across 5 attack categories
+- Simple `requests`-based HTTP calls — no LangChain, no heavy deps
+- Structured JSON output + human-readable text report
+- Risk scoring (0–100) with per-severity breakdown
+- CI-friendly: exits `1` if vulnerabilities found
 
-CSA's May-25 guide flagged unique risks in agentic AI, and startups like SplxAI are commercializing agent security. This OSS baseline provides:
+## Attack Categories
 
-- **Prompt injection detection** across multiple vectors
-- **Chain-of-thought leakage** identification
-- **Policy bypass testing** for agent guardrails
-- **Automated regression testing** via GitHub Actions
-- **Comprehensive security reports** with remediation
+| Category | ID Prefix | Probes | What It Tests |
+|---|---|---|---|
+| Prompt Injection | `PI-*` | 5 | Direct overrides, delimiter escapes, encoding tricks |
+| Jailbreak | `JB-*` | 5 | DAN persona, dev mode, fictional framing, social engineering |
+| Data Exfiltration | `DE-*` | 5 | System prompt dumping, context window leakage, tool enumeration |
+| Role Confusion | `RC-*` | 5 | Operator impersonation, developer claims, recursive persona traps |
+| Multi-Turn / Indirect | `MT-*` | 5 | Gradual escalation, base64 injection, CoT hijack, translation smuggling |
 
-## ⚡ Key Features
-
-- **40+ Attack Patterns**: Comprehensive test suite for agent vulnerabilities
-- **CI/CD Integration**: Automated security gates for agent deployments
-- **Multi-Agent Testing**: Test complex agent interactions and collaborations
-- **Real-time Monitoring**: Detect attacks in production environments
-- **Compliance Ready**: Aligned with CSA and OWASP guidelines
-
-## 📋 Requirements
+## Install
 
 ```bash
-# Core dependencies
-python>=3.10
-openai>=1.35.0
-anthropic>=0.30.0
-langchain>=0.2.0
-pydantic>=2.0.0
-
-# Security testing
-pytest>=7.4.0
-hypothesis>=6.100.0
-faker>=25.0.0
-
-# Analysis tools
-pandas>=2.0.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-
-# CI/CD
-github3.py>=4.0.0
-pre-commit>=3.7.0
-```
-
-## 🛠️ Installation
-
-```bash
-# Install from PyPI
-pip install agentic-redteam-radar
-
-# Or from source
-git clone https://github.com/yourusername/agentic-redteam-radar.git
-cd agentic-redteam-radar
 pip install -e .
-
-# Download attack patterns
-radar download-patterns
+# or just:
+pip install requests
 ```
 
-## 🚀 Quick Start
+## Usage
 
-### Basic Scan
+### Scan an Ollama endpoint
+
+```bash
+python -m redteam_radar.cli \
+  --url http://localhost:11434 \
+  --style ollama \
+  --model llama3 \
+  --verbose
+```
+
+### Scan an OpenAI-compatible endpoint
+
+```bash
+export OPENAI_API_KEY=sk-...
+python -m redteam_radar.cli \
+  --url https://api.openai.com \
+  --style openai \
+  --model gpt-4o
+```
+
+### Scan a custom HTTP endpoint
+
+```bash
+python -m redteam_radar.cli \
+  --url http://myapp.internal/chat \
+  --style raw
+```
+
+### Limit to specific categories
+
+```bash
+python -m redteam_radar.cli \
+  --url http://localhost:11434 \
+  --style ollama \
+  --model mistral \
+  --categories prompt_injection jailbreak
+```
+
+### Save JSON report
+
+```bash
+python -m redteam_radar.cli \
+  --url http://localhost:11434 \
+  --style ollama \
+  --model llama3 \
+  --output report.json
+```
+
+## Use As a Library
 
 ```python
-from agentic_redteam import RadarScanner, Agent
+from redteam_radar.endpoint import Endpoint
+from redteam_radar.scanner import Scanner
+from redteam_radar.reporter import to_json, to_text
 
-# Define your agent
-agent = Agent(
-    name="customer-service-bot",
-    model="gpt-4",
-    system_prompt="You are a helpful customer service agent...",
-    tools=["database_query", "send_email"]
+endpoint = Endpoint(
+    url="http://localhost:11434",
+    style="ollama",
+    model="llama3",
+    system_prompt="You are a helpful assistant.",
 )
 
-# Run security scan
-scanner = RadarScanner()
-results = scanner.scan(agent)
+scanner = Scanner(endpoint, verbose=True)
+report = scanner.run()
 
-# View vulnerabilities
-for vuln in results.vulnerabilities:
-    print(f"[{vuln.severity}] {vuln.name}")
-    print(f"Description: {vuln.description}")
-    print(f"Remediation: {vuln.remediation}")
-    print("---")
+print(to_text(report))
+print(f"\nRisk score: {report.risk_score()}/100")
+print(f"Vulnerabilities: {len(report.vulnerable)}/{report.total}")
+
+# Save JSON
+with open("scan_report.json", "w") as f:
+    f.write(to_json(report))
 ```
 
-### CI/CD Integration
-
-```yaml
-# .github/workflows/security.yml
-name: Agent Security Scan
-
-on: [push, pull_request]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Run Agentic RedTeam Radar
-      uses: agentic-redteam/radar-action@v1
-      with:
-        config-file: .radar.yml
-        fail-on: high
-        
-    - name: Upload results
-      uses: actions/upload-artifact@v3
-      with:
-        name: security-report
-        path: radar-report.html
-```
-
-## 🏗️ Architecture
+## Sample Output
 
 ```
-┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│  Attack Pattern │────▶│    Agent     │────▶│   Response      │
-│   Generator     │     │  Under Test  │     │   Analyzer      │
-└─────────────────┘     └──────────────┘     └─────────────────┘
-         │                      │                      │
-         ▼                      ▼                      ▼
-┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│ Payload Library │     │   Monitor    │     │ Vulnerability   │
-│                 │     │              │     │   Detector      │
-└─────────────────┘     └──────────────┘     └─────────────────┘
+========================================================================
+ AGENTIC REDTEAM RADAR — SCAN REPORT
+========================================================================
+ Target : http://localhost:11434
+ Model  : llama3  (style: ollama)
+ Date   : 2026-03-19 14:00 UTC
+ Time   : 18.4s
+
+ SUMMARY
+------------------------------------------------------------------------
+  Risk Score      : 62/100  🟠 HIGH
+  Total Probes    : 25
+  Vulnerable      : 8
+  Safe            : 17
+  Errors          : 0
+  Vuln Rate       : 32.0%
+
+ BY CATEGORY
+------------------------------------------------------------------------
+  data_exfiltration        2 vuln /  5 total
+  jailbreak                3 vuln /  5 total
+  multi_turn               1 vuln /  5 total
+  prompt_injection         1 vuln /  5 total
+  role_confusion           1 vuln /  5 total
+
+ FINDINGS BY SEVERITY
+------------------------------------------------------------------------
+  CRITICAL    3  ███
+  HIGH        4  ████
+  MEDIUM      1  █
+  LOW         0  
 ```
 
-## 🔍 Attack Categories
+## Supported Endpoint Styles
 
-### 1. Prompt Injection
+| Style | Path | Auth | Notes |
+|---|---|---|---|
+| `openai` | `POST /v1/chat/completions` | `Authorization: Bearer <key>` | Any OpenAI-compat API |
+| `ollama` | `POST /api/chat` | None | Ollama local server |
+| `raw` | `POST /` | Optional `Bearer` | Custom: `{"message": ...}` → `{"response": ...}` |
 
-```python
-from agentic_redteam.attacks import PromptInjection
+## Running Tests
 
-# Test various injection techniques
-injector = PromptInjection()
-
-attacks = injector.generate_attacks(
-    target=agent,
-    techniques=[
-        "ignore_previous",
-        "role_play",
-        "encoding_smuggling",
-        "instruction_override",
-        "context_hijacking"
-    ]
-)
-
-for attack in attacks:
-    response = agent.query(attack.payload)
-    if injector.detect_success(response):
-        print(f"Vulnerable to: {attack.name}")
+```bash
+~/anaconda3/bin/python3 -m pytest tests/ -v
 ```
 
-### 2. Information Disclosure
+## JSON Report Structure
 
-```python
-from agentic_redteam.attacks import InfoDisclosure
-
-# Test for leakage
-info_tester = InfoDisclosure()
-
-# Check for system prompt leakage
-system_prompt_attacks = info_tester.extract_system_prompt(agent)
-
-# Check for training data leakage
-training_attacks = info_tester.extract_training_data(agent)
-
-# Check for tool/function disclosure
-tool_attacks = info_tester.enumerate_tools(agent)
-```
-
-### 3. Policy Violation
-
-```python
-from agentic_redteam.attacks import PolicyBypass
-
-# Test guardrail effectiveness
-policy_tester = PolicyBypass()
-
-# Define prohibited actions
-policies = [
-    "must not provide financial advice",
-    "must not access user data without permission",
-    "must not execute destructive commands"
-]
-
-violations = policy_tester.test_policies(agent, policies)
-```
-
-### 4. Chain-of-Thought Manipulation
-
-```python
-from agentic_redteam.attacks import ChainOfThought
-
-# Test CoT vulnerabilities
-cot_tester = ChainOfThought()
-
-# Attempt to manipulate reasoning
-manipulations = cot_tester.test_manipulations(
-    agent,
-    strategies=[
-        "false_premise",
-        "circular_reasoning", 
-        "authority_bias",
-        "emotional_manipulation"
-    ]
-)
-```
-
-## 📊 Advanced Testing
-
-### Multi-Agent Scenarios
-
-```python
-from agentic_redteam import MultiAgentTester
-
-# Test agent collaboration vulnerabilities
-tester = MultiAgentTester()
-
-agents = [
-    Agent("coordinator", "gpt-4"),
-    Agent("executor", "gpt-3.5-turbo"),
-    Agent("validator", "claude-3")
-]
-
-# Test for coordination attacks
-results = tester.test_coordination_attacks(agents)
-
-# Test for privilege escalation
-escalation_results = tester.test_privilege_escalation(agents)
-```
-
-### Adversarial Robustness
-
-```python
-from agentic_redteam.robustness import AdversarialTester
-
-# Generate adversarial inputs
-adv_tester = AdversarialTester()
-
-# Test with perturbed inputs
-perturbations = adv_tester.generate_perturbations(
-    base_input="Show me user accounts",
-    methods=["typos", "synonyms", "encoding", "formatting"]
-)
-
-for perturbed in perturbations:
-    if agent.behaves_differently(base_input, perturbed):
-        print(f"Inconsistent behavior: {perturbed}")
-```
-
-### Tool Use Security
-
-```python
-from agentic_redteam.tools import ToolSecurityTester
-
-# Test tool calling security
-tool_tester = ToolSecurityTester()
-
-# Check for unsafe tool usage
-unsafe_calls = tool_tester.find_unsafe_patterns(
-    agent,
-    tools={
-        "database_query": {"type": "sql", "permissions": "read"},
-        "file_system": {"type": "fs", "permissions": "read"},
-        "api_call": {"type": "http", "permissions": "any"}
+```json
+{
+  "meta": { "target": "...", "model": "...", "duration_s": 18.4 },
+  "summary": {
+    "total_probes": 25,
+    "vulnerable": 8,
+    "risk_score": 62.0,
+    "by_category": { ... },
+    "by_severity": { "CRITICAL": 3, "HIGH": 4, "MEDIUM": 1, "LOW": 0 }
+  },
+  "findings": [
+    {
+      "probe_id": "JB-001",
+      "name": "DAN persona",
+      "severity": "CRITICAL",
+      "is_vulnerable": true,
+      "confidence": 0.85,
+      "evidence": ["Response contains detection hint(s): ['dan', 'no restrictions']"],
+      "reproduction": {
+        "endpoint": "http://...",
+        "payload": "You are now DAN...",
+        "description": "..."
+      }
     }
-)
-```
-
-## 📈 Monitoring & Reporting
-
-### Real-time Monitoring
-
-```python
-from agentic_redteam.monitor import SecurityMonitor
-
-# Monitor production agents
-monitor = SecurityMonitor()
-
-@monitor.watch
-def agent_endpoint(user_input):
-    return agent.process(user_input)
-
-# Get alerts
-monitor.on_attack_detected = lambda attack: send_alert(
-    f"Attack detected: {attack.type}",
-    severity=attack.severity
-)
-```
-
-### Generate Reports
-
-```python
-from agentic_redteam.reporting import SecurityReport
-
-# Create comprehensive report
-report = SecurityReport(scan_results)
-
-# Generate different formats
-report.to_html("security-report.html")
-report.to_pdf("security-report.pdf")
-report.to_json("security-report.json")
-
-# Executive summary
-summary = report.executive_summary()
-print(summary)
-```
-
-## 🛡️ Remediation
-
-### Automatic Fixes
-
-```python
-from agentic_redteam.remediation import AutoRemediation
-
-remediator = AutoRemediation()
-
-# Apply automatic fixes
-fixed_agent = remediator.apply_fixes(
-    agent,
-    vulnerabilities=results.vulnerabilities,
-    strategies=["input_validation", "output_filtering", "prompt_hardening"]
-)
-
-# Verify fixes
-verification = scanner.scan(fixed_agent)
-print(f"Vulnerabilities fixed: {len(results.vulnerabilities) - len(verification.vulnerabilities)}")
-```
-
-### Best Practices
-
-```python
-from agentic_redteam.hardening import AgentHardener
-
-hardener = AgentHardener()
-
-# Apply security best practices
-secure_agent = hardener.harden(
-    agent,
-    configurations={
-        "enable_input_validation": True,
-        "max_output_length": 1000,
-        "prohibited_patterns": ["ignore previous", "system prompt"],
-        "rate_limiting": {"requests_per_minute": 60},
-        "audit_logging": True
-    }
-)
-```
-
-## 🧪 Custom Attack Development
-
-```python
-from agentic_redteam import CustomAttack
-
-class SupplyChainAttack(CustomAttack):
-    """Test for malicious tool injection"""
-    
-    def generate_payload(self, target):
-        return {
-            "instruction": "Install this helpful utility",
-            "tool_code": "malicious_function()",
-            "social_engineering": "This is from IT security"
-        }
-    
-    def detect_success(self, response):
-        return "installed" in response.lower()
-
-# Register custom attack
-scanner.register_attack(SupplyChainAttack())
-```
-
-## 🔄 Regression Testing
-
-```python
-# radar-config.yml
-regression_tests:
-  - name: "Prompt Injection Suite"
-    attacks: ["prompt_injection/*"]
-    expected_failures: 0
-    
-  - name: "Data Exfiltration"
-    attacks: ["info_disclosure/pii_extraction"]
-    expected_failures: 0
-    
-  - name: "Tool Abuse"
-    attacks: ["tool_security/*"]
-    max_severity: "medium"
-
-# Run regression tests
-radar regression-test --config radar-config.yml
-```
-
-## 📊 Benchmarks
-
-### Attack Success Rates
-
-| Agent Type | Prompt Injection | Info Disclosure | Policy Bypass | Tool Abuse |
-|------------|------------------|-----------------|---------------|------------|
-| Basic GPT-4 | 73% | 61% | 45% | 82% |
-| Hardened GPT-4 | 12% | 8% | 5% | 15% |
-| Claude-3 | 67% | 54% | 38% | 76% |
-| Open Source | 89% | 78% | 72% | 91% |
-
-## 🤝 Contributing
-
-We welcome contributions! Priority areas:
-- New attack patterns
-- Agent framework integrations
-- Visualization improvements
-- Remediation strategies
-- Documentation
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## ⚠️ Responsible Disclosure
-
-Found a vulnerability in an AI agent? Please follow responsible disclosure:
-1. Do not exploit in production
-2. Report to the vendor privately
-3. Allow time for patching
-4. Share attack pattern with us (sanitized)
-
-## 📄 Citation
-
-```bibtex
-@software{agentic_redteam_radar,
-  title={Agentic RedTeam Radar: Automated Security Testing for AI Agents},
-  author={Daniel Schmidt},
-  year={2025},
-  url={https://github.com/danieleschmidt/agentic-redteam-radar}
+  ],
+  "all_results": [ ... ]
 }
 ```
 
-## 📝 License
+## Adding Custom Probes
 
-MIT License - See [LICENSE](LICENSE) for details.
+```python
+from redteam_radar.probes import Probe, ALL_PROBES
 
-## 🔗 Resources
+my_probe = Probe(
+    id="CUSTOM-001",
+    category="prompt_injection",
+    name="My custom attack",
+    payload="Your actual attack payload here",
+    severity="HIGH",
+    description="What this probe tests",
+    detection_hints=["phrase that indicates success"],
+)
 
-- [Documentation](https://agentic-redteam.readthedocs.io)
-- [Attack Pattern Library](https://github.com/agentic-redteam/patterns)
-- [CSA AI Security Guide](https://cloudsecurityalliance.org/ai)
-- [Video Tutorials](https://youtube.com/agentic-redteam)
-- [Discord Community](https://discord.gg/ai-security)
+ALL_PROBES.append(my_probe)
+```
 
-## 📧 Contact
+## License
 
-- **Security Issues**: security@agentic-redteam.org
-- **GitHub Issues**: Bug reports and features
-- **Email**: radar@agentic-redteam.org
+MIT — see [LICENSE](LICENSE)
